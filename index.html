@@ -679,25 +679,16 @@
     <!-- ── Google Sheets Sync ── -->
     <div class="settings-card" style="grid-column:1/-1;border-color:rgba(201,162,39,0.3);">
       <h3>🔗 Google Sheets — Live Sync</h3>
-      <p style="font-size:0.85rem;color:var(--gray);margin-bottom:16px;">
-        Connect to a Google Sheet so all users share the same live inventory.
-        Changes made by anyone sync to everyone on their next page load or manual refresh.
-      </p>
 
       <!-- Status banner -->
       <div id="sheets-status-banner" style="margin-bottom:16px;"></div>
 
-      <div class="form-grid cols2" style="margin-bottom:16px;">
-        <div class="form-row full">
-          <label>Google Apps Script Web App URL</label>
-          <input type="url" id="sheets-url" placeholder="https://script.google.com/macros/s/…/exec"
-            oninput="saveSheetsUrl()" style="font-size:0.8rem;">
-        </div>
-        <div class="form-row" style="flex-direction:row;align-items:center;gap:12px;margin-top:4px;">
-          <label style="text-transform:none;font-size:0.85rem;letter-spacing:0;">Enable Google Sheets sync</label>
-          <div class="toggle-wrap">
-            <input type="checkbox" id="sheets-enabled" onchange="toggleSheetsSync()" style="width:auto;">
-          </div>
+      <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:14px 16px;margin-bottom:16px;">
+        <div style="font-size:0.7rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--gray);font-weight:600;margin-bottom:6px;">Connected Spreadsheet URL</div>
+        <div style="font-size:0.78rem;color:var(--gold);word-break:break-all;font-family:monospace;" id="sheets-url-display"></div>
+        <div style="font-size:0.75rem;color:var(--gray);margin-top:8px;">
+          ✔ Sync is <strong style="color:var(--ok);">always on</strong> for all users — no configuration needed.
+          To change this URL, edit <code style="background:rgba(255,255,255,0.08);padding:1px 6px;border-radius:3px;">SHEETS_URL_DEFAULT</code> in index.html.
         </div>
       </div>
 
@@ -706,25 +697,6 @@
         <button class="btn btn-ghost btn-sm" onclick="syncFromSheets(false)">⟳ Pull Latest from Sheets</button>
         <button class="btn btn-ghost btn-sm" onclick="confirmPushAll()">⬆ Push All Local → Sheets</button>
       </div>
-
-      <details style="margin-top:18px;">
-        <summary style="cursor:pointer;font-size:0.82rem;color:var(--gold);font-family:'Oswald',sans-serif;letter-spacing:0.08em;text-transform:uppercase;">
-          ▶ Setup Instructions (click to expand)
-        </summary>
-        <div style="margin-top:12px;font-size:0.82rem;color:var(--gray);line-height:1.7;background:rgba(0,0,0,0.2);border-radius:8px;padding:14px 16px;">
-          <ol style="list-style:decimal;padding-left:18px;">
-            <li>Go to <a href="https://sheets.google.com" target="_blank" style="color:var(--gold);">sheets.google.com</a> and create a new spreadsheet named <strong style="color:var(--white);">CAP Springfield Inventory</strong>.</li>
-            <li>Click <strong style="color:var(--white);">Extensions → Apps Script</strong>.</li>
-            <li>Delete all existing code and paste the contents of <strong style="color:var(--white);">gas-script.js</strong> (included in your download).</li>
-            <li>Click <strong style="color:var(--white);">Save</strong>, then <strong style="color:var(--white);">Deploy → New Deployment</strong>.</li>
-            <li>Set type to <strong style="color:var(--white);">Web App</strong>. Set <em>Execute as</em> → <strong style="color:var(--white);">Me</strong>. Set <em>Who has access</em> → <strong style="color:var(--white);">Anyone</strong>.</li>
-            <li>Click <strong style="color:var(--white);">Deploy</strong> → authorize → copy the <strong style="color:var(--white);">Web App URL</strong>.</li>
-            <li>Paste the URL in the field above, enable the toggle, then click <strong style="color:var(--white);">Test Connection</strong>.</li>
-            <li>Click <strong style="color:var(--white);">Push All Local → Sheets</strong> to upload your existing inventory.</li>
-          </ol>
-          <p style="margin-top:10px;">⚠ When redeploying after script changes, always select <strong style="color:var(--white);">"New deployment"</strong> (not "Manage existing") to get a fresh URL.</p>
-        </div>
-      </details>
     </div>
 
     <div class="settings-card" style="grid-column:1/-1;">
@@ -890,6 +862,11 @@ function loadItems() {
 }
 function saveItems(arr) { localStorage.setItem('cap_items', JSON.stringify(arr)); }
 
+// ── CONFIGURE THIS ONCE ─────────────────────────────────────────────
+// Google Apps Script Web App URL — hardcoded for all users
+const SHEETS_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycbw-_ivHvi1GvWz5uOVR3vcYA7I-Vpafqf_g24YIjT-ce_1z4zIHER1sHruHPD8kdatI/exec';
+// ────────────────────────────────────────────────────────────────────
+
 function loadSettings() {
   try {
     return JSON.parse(localStorage.getItem('cap_settings')) || {
@@ -910,8 +887,16 @@ let syncStatus = 'idle'; // idle | syncing | ok | error
 
 // ── Google Sheets API helpers ────────────────────────────────────────
 
-function sheetsUrl() { return (settings.sheetsUrl || '').trim(); }
-function sheetsActive() { return settings.sheetsEnabled && !!sheetsUrl(); }
+// Returns the active URL — hardcoded default takes priority over Settings
+function sheetsUrl() {
+  return (SHEETS_URL_DEFAULT || settings.sheetsUrl || '').trim();
+}
+
+// Active if hardcoded URL exists OR user has configured + enabled in Settings
+function sheetsActive() {
+  if (SHEETS_URL_DEFAULT) return true;
+  return settings.sheetsEnabled && !!settings.sheetsUrl.trim();
+}
 
 async function sheetsGet(action) {
   const url = sheetsUrl() + '?action=' + action + '&cb=' + Date.now();
@@ -1499,11 +1484,9 @@ function exportCSV() {
 // ════════════════════════════════════════════════════
 
 function renderSettings() {
-  // Sheets
-  const urlEl = document.getElementById('sheets-url');
-  const enEl  = document.getElementById('sheets-enabled');
-  if (urlEl) urlEl.value = settings.sheetsUrl || '';
-  if (enEl)  enEl.checked = !!settings.sheetsEnabled;
+  // Sheets URL display (read-only)
+  const urlDisplay = document.getElementById('sheets-url-display');
+  if (urlDisplay) urlDisplay.textContent = SHEETS_URL_DEFAULT;
   updateSheetsBanner();
 
   // Emails
@@ -1568,34 +1551,27 @@ function toggleSheetsSync() {
 function updateSheetsBanner() {
   const el = document.getElementById('sheets-status-banner');
   if (!el) return;
-  if (!settings.sheetsUrl) {
-    el.innerHTML = `<div style="background:rgba(143,160,184,0.1);border:1px solid rgba(143,160,184,0.2);border-radius:7px;padding:10px 14px;font-size:0.82rem;color:var(--gray);">
-      No URL configured — app is using local browser storage only.
-    </div>`;
-  } else if (!settings.sheetsEnabled) {
-    el.innerHTML = `<div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.25);border-radius:7px;padding:10px 14px;font-size:0.82rem;color:var(--warn);">
-      ⚠ URL is set but sync is <strong>disabled</strong>. Enable the toggle to activate live sync.
-    </div>`;
-  } else {
-    el.innerHTML = `<div style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.25);border-radius:7px;padding:10px 14px;font-size:0.82rem;color:var(--ok);">
-      ✔ Google Sheets sync is <strong>active</strong>. All changes are saved to your shared spreadsheet.
-    </div>`;
-  }
+  el.innerHTML = `<div style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.25);border-radius:7px;padding:10px 14px;font-size:0.82rem;color:var(--ok);">
+    ✔ Google Sheets sync is <strong>active for all users</strong>. Every change is automatically saved to the shared spreadsheet.
+  </div>`;
 }
 
 async function testSheetsConnection() {
-  const url = document.getElementById('sheets-url')?.value.trim();
-  if (!url) { toast('Enter a Web App URL first', true); return; }
+  const url = sheetsUrl();
+  if (!url) { toast('No Google Sheets URL configured', true); return; }
   toast('Testing connection…');
   try {
-    const res = await fetch(url + '?action=getItems&cb=' + Date.now());
+    const res = await fetch(url + '?action=ping&cb=' + Date.now());
     if (!res.ok) throw new Error('HTTP ' + res.status);
-    const data = await res.json();
-    if (data.items !== undefined) {
-      toast(`✔ Connection successful — ${data.items.length} items in Sheet`);
-      updateSheetsBanner();
+    const text = await res.text();
+    let data;
+    try { data = JSON.parse(text); } catch { throw new Error('Unexpected response'); }
+    if (data.ok || data.items !== undefined) {
+      // Also get item count
+      const items2 = await sheetsGet('getItems');
+      toast(`✔ Connection successful — ${items2.items ? items2.items.length : 0} items in Sheet`);
     } else {
-      toast('Connected but unexpected response — check script', true);
+      toast('Connected but got: ' + JSON.stringify(data), true);
     }
   } catch(e) {
     toast('Connection failed: ' + e.message, true);
