@@ -921,23 +921,25 @@
 <div class="page" id="page-settings">
   <div class="settings-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;max-width:900px;">
 
-    <!-- ── Vercel API Sync ── -->
+    <!-- ── Google Sheets Sync ── -->
     <div class="settings-card" style="grid-column:1/-1;border-color:rgba(201,162,39,0.3);">
-      <h3>🔗 Vercel — Live Sync</h3>
+      <h3>🔗 Google Sheets — Live Sync</h3>
 
       <div style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.25);border-radius:7px;padding:12px 16px;margin-bottom:16px;font-size:0.85rem;color:var(--ok);">
-        ✔ Live sync is <strong>always active</strong>. All changes are instantly saved to the shared Vercel database and available to every user.
+        ✔ Live sync is <strong>always active</strong> for all users via Google Sheets.
+        All changes are automatically saved to the shared spreadsheet.
       </div>
 
-      <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:12px 16px;margin-bottom:16px;font-size:0.82rem;color:var(--gray);">
-        The app reads and writes to <strong style="color:var(--white);">/api/items</strong> on the same Vercel domain.
-        No URLs to configure — it works automatically for everyone who opens the app.
+      <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:12px 16px;margin-bottom:16px;">
+        <div style="font-size:0.7rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--gray);font-weight:600;margin-bottom:6px;">Connected Spreadsheet</div>
+        <div style="font-size:0.75rem;color:var(--gold);word-break:break-all;font-family:monospace;" id="sheets-url-display"></div>
+        <div style="font-size:0.75rem;color:var(--gray);margin-top:8px;">To change this URL, edit <code style="background:rgba(255,255,255,0.08);padding:1px 6px;border-radius:3px;">SHEETS_URL</code> in index.html.</div>
       </div>
 
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
-        <button class="btn btn-primary btn-sm" onclick="testSheetsConnection()">🔌 Test API</button>
+        <button class="btn btn-primary btn-sm" onclick="testSheetsConnection()">🔌 Test Connection</button>
         <button class="btn btn-ghost btn-sm" onclick="syncFromSheets(false)">⟳ Pull Latest</button>
-        <button class="btn btn-ghost btn-sm" onclick="confirmPushAll()">⬆ Push All Local → Vercel</button>
+        <button class="btn btn-ghost btn-sm" onclick="confirmPushAll()">⬆ Push All Local → Sheets</button>
       </div>
     </div>
 
@@ -1122,25 +1124,30 @@ let settings  = loadSettings();
 let editingId = null;
 let syncStatus = 'idle';
 
-// ── Vercel API helpers ───────────────────────────────────────────
-// When hosted on Vercel, API calls go to /api/items (same domain).
-// This means no CORS issues and no URL to configure — it just works.
-const API = '/api/items';
+// ── Google Sheets API helpers ────────────────────────────────────────
+// All sync goes through the hardcoded Apps Script Web App URL below.
+// Same-domain CORS is not needed — GAS handles cross-origin requests.
 
-async function apiGet(action) {
-  const res = await fetch(`${API}?action=${action}&cb=${Date.now()}`);
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  return res.json();
+const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbw-_ivHvi1GvWz5uOVR3vcYA7I-Vpafqf_g24YIjT-ce_1z4zIHER1sHruHPD8kdatI/exec';
+
+async function sheetsGet(action) {
+  const res = await fetch(SHEETS_URL + '?action=' + action + '&cb=' + Date.now());
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  const text = await res.text();
+  try { return JSON.parse(text); } catch { throw new Error('Bad response'); }
 }
 
-async function apiPost(body) {
-  const res = await fetch(API, {
+async function sheetsPost(body) {
+  // GAS requires text/plain to avoid CORS preflight
+  const res = await fetch(SHEETS_URL, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body)
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify(body),
+    redirect: 'follow',
   });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const data = await res.json();
+  const text = await res.text();
+  let data;
+  try { data = JSON.parse(text); } catch { throw new Error('Bad response: ' + text.slice(0,100)); }
   if (data.error) throw new Error(data.error);
   return data;
 }
@@ -1161,11 +1168,11 @@ function setSyncStatus(status, msg) {
   </span>`;
 }
 
-// Pull latest items from Vercel KV → update local cache → re-render
+// Pull latest items from Sheets → local cache → re-render
 async function syncFromSheets(silent) {
   setSyncStatus('syncing', 'Loading…');
   try {
-    const data = await apiGet('getItems');
+    const data = await sheetsGet('getItems');
     if (data.items && data.items.length > 0) {
       items = data.items;
       saveItems(items);
@@ -1173,55 +1180,62 @@ async function syncFromSheets(silent) {
       renderInventory();
     }
     setSyncStatus('ok', 'Synced ' + new Date().toLocaleTimeString());
-    if (!silent) toast('Inventory synced ✔');
+    if (!silent) toast('Inventory synced from Google Sheets ✔');
   } catch(e) {
     setSyncStatus('error', 'Sync failed');
     if (!silent) toast('Sync failed: ' + e.message + ' — using local data', true);
   }
 }
 
-// Push a single item to Vercel KV
+// Push a single item change to Sheets
 async function pushItemToSheets(item) {
   setSyncStatus('syncing', 'Saving…');
   try {
-    await apiPost({ action: 'saveItem', item });
+    await sheetsPost({ action: 'saveItem', item });
     setSyncStatus('ok', 'Saved ' + new Date().toLocaleTimeString());
   } catch(e) {
     setSyncStatus('error', 'Save failed');
-    toast('Saved locally — API error: ' + e.message, true);
+    toast('Saved locally — sync error: ' + e.message, true);
   }
 }
 
-// Delete a single item from Vercel KV
+// Delete a single item from Sheets
 async function deleteItemFromSheets(id) {
   try {
-    await apiPost({ action: 'deleteItem', id });
-  } catch(e) {
-    // silent — local delete already done
-  }
+    await sheetsPost({ action: 'deleteItem', id });
+  } catch(e) { /* silent — local delete already done */ }
 }
 
-// Push ALL local items to Vercel KV (initial upload)
+// Push ALL local items to Sheets in batches
 async function pushAllToSheets() {
   setSyncStatus('syncing', 'Uploading…');
   try {
-    await apiPost({ action: 'saveAllItems', items });
+    const BATCH = 50;
+    if (items.length <= BATCH) {
+      await sheetsPost({ action: 'saveAllItems', items });
+    } else {
+      await sheetsPost({ action: 'saveAllItems', items: [] });
+      for (let i = 0; i < items.length; i += BATCH) {
+        const batch = items.slice(i, i + BATCH);
+        await sheetsPost({ action: 'appendItems', items: batch });
+        setSyncStatus('syncing', `Uploading… ${Math.min(i+BATCH, items.length)}/${items.length}`);
+      }
+    }
     setSyncStatus('ok', 'All items uploaded');
-    toast('All items pushed to Vercel ✔');
+    toast('All items pushed to Google Sheets ✔');
   } catch(e) {
     setSyncStatus('error', 'Upload failed');
     toast('Push failed: ' + e.message, true);
   }
 }
 
-// Test the API connection
 async function testSheetsConnection() {
   toast('Testing connection…');
   try {
-    const data = await apiGet('ping');
-    if (data.ok) {
-      const items2 = await apiGet('getItems');
-      toast(`✔ API connected — ${items2.items ? items2.items.length : 0} items in database`);
+    const res = await sheetsGet('ping');
+    if (res.ok || res.items !== undefined) {
+      const data = await sheetsGet('getItems');
+      toast(`✔ Connected — ${data.items ? data.items.length : 0} items in Sheet`);
     } else {
       toast('Connected but unexpected response', true);
     }
@@ -1231,7 +1245,7 @@ async function testSheetsConnection() {
 }
 
 function confirmPushAll() {
-  if (!confirm(`Push all ${items.length} local items to Vercel? This will overwrite the database.`)) return;
+  if (!confirm(`Push all ${items.length} local items to Google Sheets? This will overwrite the Sheet's current data.`)) return;
   pushAllToSheets();
 }
 
@@ -1805,7 +1819,8 @@ function exportCSV() {
 // ════════════════════════════════════════════════════
 
 function renderSettings() {
-  updateSheetsBanner();
+  const urlDisplay = document.getElementById('sheets-url-display');
+  if (urlDisplay) urlDisplay.textContent = SHEETS_URL;
 
   // Emails
   const list = document.getElementById('email-list');
@@ -1852,15 +1867,15 @@ function saveSettings() {
   saveSettingsData(settings);
 }
 
-function updateSheetsBanner() { /* Vercel: always active */ }
+function updateSheetsBanner() { /* always active — no dynamic state needed */ }
 
 async function testSheetsConnection() {
-  toast('Testing API connection…');
+  toast('Testing connection…');
   try {
-    const data = await apiGet('ping');
-    if (data.ok) {
-      const result = await apiGet('getItems');
-      toast(`✔ API connected — ${result.items ? result.items.length : 0} items in database`);
+    const res = await sheetsGet('ping');
+    if (res.ok || res.message) {
+      const data = await sheetsGet('getItems');
+      toast(`✔ Connected — ${data.items ? data.items.length : 0} items in Sheet`);
     } else {
       toast('Connected but unexpected response', true);
     }
@@ -1870,7 +1885,7 @@ async function testSheetsConnection() {
 }
 
 function confirmPushAll() {
-  if (!confirm(`Push all ${items.length} local items to Vercel? This will overwrite the database.`)) return;
+  if (!confirm(`Push all ${items.length} local items to Google Sheets? This will overwrite the Sheet's current data.`)) return;
   pushAllToSheets();
 }
 
@@ -2190,7 +2205,7 @@ function showInventoryValue() {
 // ════════════════════════════════════════════════════
 
 // ▼▼▼  CHANGE THIS PASSWORD  ▼▼▼
-const APP_PASSWORD = 'CAP2024!';
+const APP_PASSWORD = 'CAPIL036!';
 // ▲▲▲  CHANGE THIS PASSWORD  ▲▲▲
 
 const SESSION_KEY = 'cap_auth';
@@ -2266,7 +2281,6 @@ renderDashboard();
 if (isLoggedIn()) {
   setSyncStatus('syncing', 'Loading…');
   syncFromSheets(true);
-}
-</script>
+}</script>
 </body>
 </html>
