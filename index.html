@@ -846,19 +846,7 @@
   <!-- Desktop table -->
   <div class="table-wrap desktop-only">
     <table>
-      <thead><tr>
-        <th>Item</th>
-        <th class="right">On Hand</th>
-        <th class="right">Reorder At</th>
-        <th class="right">Max Stock</th>
-        <th class="right">Unit Cost</th>
-        <th class="right">Total Value</th>
-        <th>Vendor</th>
-        <th>Location</th>
-        <th>Status</th>
-        <th>Notes</th>
-        <th class="right">Actions</th>
-      </tr></thead>
+      <thead><tr id="inventory-thead"></tr></thead>
       <tbody id="inventory-body"></tbody>
     </table>
   </div>
@@ -1335,20 +1323,79 @@ function renderDashboard() {
 // INVENTORY TABLE
 // ════════════════════════════════════════════════════
 
+// Sort state for inventory tab
+let inventorySort = { col: 'name', dir: 'asc' };
+
+const INVENTORY_COLS = [
+  { key: 'name',      label: 'Item',          align: 'left',  numeric: false },
+  { key: 'qty',       label: 'On Hand',       align: 'right', numeric: true  },
+  { key: 'reorderAt', label: 'Reorder At',    align: 'right', numeric: true  },
+  { key: 'maxStock',  label: 'Max Stock',     align: 'right', numeric: true  },
+  { key: 'cost',      label: 'Unit Cost',     align: 'right', numeric: true  },
+  { key: 'totalVal',  label: 'Total Value',   align: 'right', numeric: true  },
+  { key: 'vendor',    label: 'Vendor',        align: 'left',  numeric: false },
+  { key: 'location',  label: 'Location',      align: 'left',  numeric: false },
+  { key: 'status',    label: 'Status',        align: 'left',  numeric: false },
+  { key: 'notes',     label: 'Notes',         align: 'left',  numeric: false },
+  { key: '_actions',  label: 'Actions',       align: 'right', numeric: false, noSort: true },
+];
+
+function sortInventory(col) {
+  if (inventorySort.col === col) {
+    inventorySort.dir = inventorySort.dir === 'asc' ? 'desc' : 'asc';
+  } else {
+    inventorySort.col = col;
+    inventorySort.dir = 'asc';
+  }
+  renderInventory();
+}
+
 function renderInventory() {
   populateCatFilters();
   const search = (document.getElementById('search-input')?.value || '').toLowerCase();
-  const catF = document.getElementById('cat-filter')?.value || '';
+  const catF   = document.getElementById('cat-filter')?.value || '';
 
   let filtered = items.filter(i => {
-    const matchSearch = i.name.toLowerCase().includes(search) || i.category.toLowerCase().includes(search);
+    const matchSearch = i.name.toLowerCase().includes(search)
+      || i.category.toLowerCase().includes(search)
+      || (i.vendor || '').toLowerCase().includes(search)
+      || (i.location || '').toLowerCase().includes(search);
     const matchCat = !catF || i.category === catF;
     return matchSearch && matchCat;
   });
 
+  // ── Sort ──
+  const { col, dir } = inventorySort;
+  const statusOrder = { critical: 0, low: 1, ok: 2 };
+  filtered.sort((a, b) => {
+    let av, bv;
+    if      (col === 'totalVal') { av = (a.cost||0)*a.qty;          bv = (b.cost||0)*b.qty; }
+    else if (col === 'status')   { av = statusOrder[getStatus(a)];  bv = statusOrder[getStatus(b)]; }
+    else                         { av = a[col] ?? '';               bv = b[col] ?? ''; }
+    if (av === bv) return 0;
+    const cmp = typeof av === 'number' && typeof bv === 'number'
+      ? av - bv
+      : String(av).localeCompare(String(bv), undefined, { numeric: true });
+    return dir === 'asc' ? cmp : -cmp;
+  });
+
+  // ── Build sortable header row ──
+  const thead = document.getElementById('inventory-thead');
+  if (thead) {
+    thead.innerHTML = INVENTORY_COLS.map(c => {
+      const isActive = !c.noSort && inventorySort.col === c.key;
+      const icon     = isActive ? (inventorySort.dir === 'asc' ? '▲' : '▼') : '⇅';
+      const alignCls = c.align === 'right' ? ' right' : '';
+      const activeCls = isActive ? (inventorySort.dir === 'asc' ? ' sort-asc' : ' sort-desc') : '';
+      const clickAttr = c.noSort ? '' : `onclick="sortInventory('${c.key}')"`;
+      return `<th class="sortable${alignCls}${activeCls}" ${clickAttr}>${c.label}${c.noSort ? '' : `<span class="sort-icon">${icon}</span>`}</th>`;
+    }).join('');
+  }
+
   const tbody = document.getElementById('inventory-body');
   if (!filtered.length) {
     tbody.innerHTML = `<tr><td colspan="11" style="text-align:center;padding:28px;color:var(--gray);">No items found.</td></tr>`;
+    renderInventoryCards([]);
     return;
   }
 
