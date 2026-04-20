@@ -960,31 +960,32 @@
 <div class="page" id="page-settings">
   <div class="settings-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;max-width:900px;">
 
-    <!-- ── Google Sheets Sync ── -->
-    <div class="settings-card" style="grid-column:1/-1;border-color:rgba(201,162,39,0.3);">
-      <h3>🔗 Google Sheets — Live Sync</h3>
-
-      <div style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.25);border-radius:7px;padding:12px 16px;margin-bottom:16px;font-size:0.85rem;color:var(--ok);">
-        ✔ Live sync is <strong>always active</strong> for all users via Google Sheets.
-        All changes are automatically saved to the shared spreadsheet.
-      </div>
-
-      <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:12px 16px;margin-bottom:16px;">
-        <div style="font-size:0.7rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--gray);font-weight:600;margin-bottom:6px;">Connected Spreadsheet</div>
-        <div style="font-size:0.75rem;color:var(--gold);word-break:break-all;font-family:monospace;" id="sheets-url-display"></div>
-        <div style="font-size:0.75rem;color:var(--gray);margin-top:8px;">To change this URL, edit <code style="background:rgba(255,255,255,0.08);padding:1px 6px;border-radius:3px;">SHEETS_URL</code> in index.html.</div>
-      </div>
-
-      <div style="display:flex;gap:8px;flex-wrap:wrap;">
-        <button class="btn btn-primary btn-sm" onclick="testSheetsConnection()">🔌 Test Connection</button>
-        <button class="btn btn-ghost btn-sm" onclick="syncFromSheets(false)">⟳ Pull Latest</button>
-        <button class="btn btn-ghost btn-sm" onclick="confirmPushAll()">⬆ Push All Local → Sheets</button>
+    <!-- ── Categories ── -->
+    <div class="settings-card">
+      <h3>📁 Categories</h3>
+      <p style="font-size:0.82rem;color:var(--gray);margin-bottom:12px;">Manage item categories used in the Add Item dropdown.</p>
+      <div id="categories-list" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;"></div>
+      <div style="display:flex;gap:8px;">
+        <input type="text" id="new-cat" placeholder="New category name">
+        <button class="btn btn-primary" onclick="addCategory()">Add</button>
       </div>
     </div>
 
+    <!-- ── Vendors ── -->
+    <div class="settings-card">
+      <h3>🏢 Vendors</h3>
+      <p style="font-size:0.82rem;color:var(--gray);margin-bottom:12px;">Manage vendor names used in the Add Item dropdown.</p>
+      <div id="vendors-list" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;"></div>
+      <div style="display:flex;gap:8px;">
+        <input type="text" id="new-vendor" placeholder="New vendor name">
+        <button class="btn btn-primary" onclick="addVendor()">Add</button>
+      </div>
+    </div>
+
+    <!-- ── Email Recipients ── -->
     <div class="settings-card" style="grid-column:1/-1;">
       <h3>📧 Email Notification Recipients</h3>
-      <p style="font-size:0.85rem;color:var(--gray);margin-bottom:14px;">These addresses will receive low-stock order reminder emails. Uses EmailJS — configure your service below.</p>
+      <p style="font-size:0.82rem;color:var(--gray);margin-bottom:12px;">These addresses receive low-stock order reminder emails.</p>
       <div class="email-list" id="email-list"></div>
       <div style="display:flex;gap:8px;">
         <input type="email" id="new-email" placeholder="name@example.com" style="flex:1;">
@@ -992,14 +993,37 @@
       </div>
     </div>
 
+    <!-- ── Divider ── -->
+    <div style="grid-column:1/-1;border-top:1px solid rgba(255,255,255,0.08);padding-top:6px;">
+      <p style="font-size:0.68rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--gray);font-weight:600;">System Configuration</p>
+    </div>
+
+    <!-- ── Google Sheets Sync ── -->
+    <div class="settings-card" style="grid-column:1/-1;border-color:rgba(201,162,39,0.3);">
+      <h3>🔗 Google Sheets — Live Sync</h3>
+      <div style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.25);border-radius:7px;padding:12px 16px;margin-bottom:14px;font-size:0.85rem;color:var(--ok);">
+        ✔ Live sync is <strong>always active</strong> for all users via Google Sheets.
+      </div>
+      <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:12px 16px;margin-bottom:14px;">
+        <div style="font-size:0.7rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--gray);font-weight:600;margin-bottom:6px;">Connected Spreadsheet</div>
+        <div style="font-size:0.73rem;color:var(--gold);word-break:break-all;font-family:monospace;" id="sheets-url-display"></div>
+        <div style="font-size:0.73rem;color:var(--gray);margin-top:8px;">To change this URL, edit <code style="background:rgba(255,255,255,0.08);padding:1px 6px;border-radius:3px;">SHEETS_URL</code> in index.html.</div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-primary btn-sm" onclick="testSheetsConnection()">🔌 Test Connection</button>
+        <button class="btn btn-ghost btn-sm" onclick="syncFromSheets(false)">⟳ Pull Latest</button>
+        <button class="btn btn-ghost btn-sm" onclick="confirmPushAll()">⬆ Push All Local → Sheets</button>
+      </div>
+    </div>
+
+    <!-- ── EmailJS Config ── -->
     <div class="settings-card">
       <h3>🔧 EmailJS Config</h3>
-      <p style="font-size:0.8rem;color:var(--gray);margin-bottom:14px;">
+      <p style="font-size:0.78rem;color:var(--gray);margin-bottom:12px;">
         Free at <a href="https://www.emailjs.com" target="_blank" style="color:var(--gold);">emailjs.com</a>.
-        Create an account, add an email service, and create a template with variables:
-        <code style="font-size:0.75rem;background:rgba(255,255,255,0.07);padding:2px 6px;border-radius:4px;">{{to_email}}</code>,
-        <code style="font-size:0.75rem;background:rgba(255,255,255,0.07);padding:2px 6px;border-radius:4px;">{{subject}}</code>,
-        <code style="font-size:0.75rem;background:rgba(255,255,255,0.07);padding:2px 6px;border-radius:4px;">{{message}}</code>.
+        Template variables: <code style="font-size:0.72rem;background:rgba(255,255,255,0.07);padding:1px 5px;border-radius:4px;">{{to_email}}</code>
+        <code style="font-size:0.72rem;background:rgba(255,255,255,0.07);padding:1px 5px;border-radius:4px;">{{subject}}</code>
+        <code style="font-size:0.72rem;background:rgba(255,255,255,0.07);padding:1px 5px;border-radius:4px;">{{message}}</code>
       </p>
       <div class="form-grid">
         <div class="form-row">
@@ -1017,9 +1041,10 @@
       </div>
     </div>
 
+    <!-- ── Data Management ── -->
     <div class="settings-card">
       <h3>📂 Data Management</h3>
-      <p style="font-size:0.85rem;color:var(--gray);margin-bottom:16px;">Import/export your inventory data as JSON for backup or sharing across devices.</p>
+      <p style="font-size:0.82rem;color:var(--gray);margin-bottom:14px;">Import/export inventory data as JSON for backup or device transfer.</p>
       <div style="display:flex;flex-direction:column;gap:10px;">
         <button class="btn btn-ghost" onclick="exportData()" style="justify-content:center;">⬇ Export JSON Backup</button>
         <label class="btn btn-ghost" style="justify-content:center;cursor:pointer;">
@@ -1027,16 +1052,6 @@
           <input type="file" accept=".json" style="display:none;" onchange="importData(event)">
         </label>
         <button class="btn btn-danger" onclick="clearAllData()" style="justify-content:center;">🗑 Clear All Data</button>
-      </div>
-    </div>
-
-    <div class="settings-card" style="grid-column:1/-1;">
-      <h3>📁 Categories</h3>
-      <p style="font-size:0.85rem;color:var(--gray);margin-bottom:14px;">Manage item categories used across inventory.</p>
-      <div id="categories-list" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;"></div>
-      <div style="display:flex;gap:8px;">
-        <input type="text" id="new-cat" placeholder="New category name">
-        <button class="btn btn-primary" onclick="addCategory()">Add</button>
       </div>
     </div>
 
@@ -1084,7 +1099,11 @@
         </div>
         <div class="form-row">
           <label>Vendor / Company</label>
-          <input type="text" id="f-vendor" placeholder="e.g. Vanguard Industries">
+          <select id="f-vendor-select" onchange="handleVendorSelect()"></select>
+        </div>
+        <div class="form-row" id="f-vendor-custom-row" style="display:none;">
+          <label>New Vendor Name</label>
+          <input type="text" id="f-vendor-custom" placeholder="Type vendor name…">
         </div>
         <div class="form-row full">
           <label>Vendor Website</label>
@@ -1122,6 +1141,7 @@
 // ════════════════════════════════════════════════════
 
 const DEFAULT_CATEGORIES = ['Ribbons','Ribbon Racks','Insignia','Uniforms','Supplies','Cadet Materials','Other'];
+const DEFAULT_VENDORS    = ['Vanguard Industries','CAP Bookstore','NHQ Supply'];
 
 const DEFAULT_ITEMS = [
   { id: uid(), name: 'Achievement Ribbon', category: 'Ribbons', qty: 12, reorderAt: 5, maxStock: 30, unit: 'each', cost: 1.50, vendor: 'Vanguard Industries', vendorUrl: 'https://www.vanguardmil.com', location: 'Supply Cabinet A', notes: '', updated: today() },
@@ -1147,13 +1167,18 @@ function saveItems(arr) { localStorage.setItem('cap_items', JSON.stringify(arr))
 
 function loadSettings() {
   try {
-    return JSON.parse(localStorage.getItem('cap_settings')) || {
-      emails: [], ejsPubKey: '', ejsService: '', ejsTemplate: '',
-      categories: [...DEFAULT_CATEGORIES]
+    const saved = JSON.parse(localStorage.getItem('cap_settings')) || {};
+    return {
+      emails:      saved.emails      || [],
+      ejsPubKey:   saved.ejsPubKey   || '',
+      ejsService:  saved.ejsService  || '',
+      ejsTemplate: saved.ejsTemplate || '',
+      categories:  saved.categories  || [...DEFAULT_CATEGORIES],
+      vendors:     saved.vendors     || [...DEFAULT_VENDORS],
     };
   } catch {
     return { emails: [], ejsPubKey: '', ejsService: '', ejsTemplate: '',
-             categories: [...DEFAULT_CATEGORIES] };
+             categories: [...DEFAULT_CATEGORIES], vendors: [...DEFAULT_VENDORS] };
   }
 }
 function saveSettingsData(s) { localStorage.setItem('cap_settings', JSON.stringify(s)); }
@@ -1928,18 +1953,27 @@ function renderSettings() {
     : `<p style="color:var(--gray);font-size:0.85rem;">No recipients added yet.</p>`;
 
   // EmailJS fields
-  document.getElementById('ejs-pubkey').value = settings.ejsPubKey || '';
-  document.getElementById('ejs-service').value = settings.ejsService || '';
+  document.getElementById('ejs-pubkey').value   = settings.ejsPubKey   || '';
+  document.getElementById('ejs-service').value  = settings.ejsService  || '';
   document.getElementById('ejs-template').value = settings.ejsTemplate || '';
 
   // Categories
   const catList = document.getElementById('categories-list');
-  catList.innerHTML = settings.categories.map((c, i) => `
+  catList.innerHTML = (settings.categories || []).map((c, i) => `
     <div class="email-chip" style="padding:5px 10px;">
       <span style="font-size:0.85rem;">${c}</span>
       <button onclick="removeCategory(${i})" style="margin-left:8px;">✕</button>
     </div>
-  `).join('');
+  `).join('') || `<p style="color:var(--gray);font-size:0.85rem;">No categories yet.</p>`;
+
+  // Vendors
+  const vendorList = document.getElementById('vendors-list');
+  vendorList.innerHTML = (settings.vendors || []).map((v, i) => `
+    <div class="email-chip" style="padding:5px 10px;">
+      <span style="font-size:0.85rem;">${v}</span>
+      <button onclick="removeVendor(${i})" style="margin-left:8px;">✕</button>
+    </div>
+  `).join('') || `<p style="color:var(--gray);font-size:0.85rem;">No vendors yet.</p>`;
 }
 
 function addEmail() {
@@ -2005,6 +2039,63 @@ function removeCategory(i) {
   renderSettings();
 }
 
+function addVendor() {
+  const val = document.getElementById('new-vendor').value.trim();
+  if (!val) return;
+  if (!settings.vendors) settings.vendors = [];
+  if (settings.vendors.includes(val)) { toast('Already exists', true); return; }
+  settings.vendors.push(val);
+  saveSettingsData(settings);
+  document.getElementById('new-vendor').value = '';
+  renderSettings();
+  toast(`Vendor "${val}" added`);
+}
+
+function removeVendor(i) {
+  if (!settings.vendors) return;
+  settings.vendors.splice(i, 1);
+  saveSettingsData(settings);
+  renderSettings();
+}
+
+// Populate the vendor dropdown in the modal
+function populateVendorSelect(selectedVal) {
+  const sel = document.getElementById('f-vendor-select');
+  if (!sel) return;
+  const vendors = settings.vendors || [];
+  sel.innerHTML =
+    `<option value="">— Select Vendor —</option>` +
+    vendors.map(v => `<option value="${v}" ${v === selectedVal ? 'selected' : ''}>${v}</option>`).join('') +
+    `<option value="__other__" ${!selectedVal || !vendors.includes(selectedVal) ? 'selected' : ''}>✎ Other / Type new…</option>`;
+  // Show or hide custom input
+  const isOther = !selectedVal || !vendors.includes(selectedVal);
+  const customRow = document.getElementById('f-vendor-custom-row');
+  const customInput = document.getElementById('f-vendor-custom');
+  if (customRow) customRow.style.display = isOther ? 'flex' : 'none';
+  if (customInput && isOther && selectedVal && !vendors.includes(selectedVal)) {
+    customInput.value = selectedVal;
+  } else if (customInput && !isOther) {
+    customInput.value = '';
+  }
+}
+
+function handleVendorSelect() {
+  const sel   = document.getElementById('f-vendor-select');
+  const row   = document.getElementById('f-vendor-custom-row');
+  const input = document.getElementById('f-vendor-custom');
+  const isOther = sel.value === '__other__' || sel.value === '';
+  if (row) row.style.display = isOther ? 'flex' : 'none';
+  if (input && isOther) { input.value = ''; input.focus(); }
+}
+
+// Get the resolved vendor name from modal (dropdown or custom)
+function getModalVendor() {
+  const sel = document.getElementById('f-vendor-select');
+  if (!sel) return '';
+  if (sel.value && sel.value !== '__other__') return sel.value;
+  return (document.getElementById('f-vendor-custom')?.value || '').trim();
+}
+
 // ════════════════════════════════════════════════════
 // ADD / EDIT MODAL
 // ════════════════════════════════════════════════════
@@ -2018,17 +2109,17 @@ function populateCatSelect(selectId, selectedVal) {
 function openAddModal() {
   editingId = null;
   document.getElementById('modal-title').textContent = 'Add Item';
-  document.getElementById('f-name').value = '';
-  document.getElementById('f-qty').value = '';
-  document.getElementById('f-reorder').value = '5';
-  document.getElementById('f-max').value = '20';
-  document.getElementById('f-unit').value = 'each';
-  document.getElementById('f-cost').value = '';
-  document.getElementById('f-vendor').value = '';
+  document.getElementById('f-name').value      = '';
+  document.getElementById('f-qty').value       = '';
+  document.getElementById('f-reorder').value   = '5';
+  document.getElementById('f-max').value       = '20';
+  document.getElementById('f-unit').value      = 'each';
+  document.getElementById('f-cost').value      = '';
   document.getElementById('f-vendorUrl').value = '';
-  document.getElementById('f-location').value = '';
-  document.getElementById('f-notes').value = '';
+  document.getElementById('f-location').value  = '';
+  document.getElementById('f-notes').value     = '';
   populateCatSelect('f-cat', settings.categories[0]);
+  populateVendorSelect('');
   document.getElementById('item-modal').classList.add('open');
 }
 
@@ -2036,18 +2127,18 @@ function openEditModal(id) {
   editingId = id;
   const item = items.find(i => i.id === id);
   if (!item) return;
-  document.getElementById('modal-title').textContent = 'Edit Item';
-  document.getElementById('f-name').value = item.name;
-  document.getElementById('f-qty').value = item.qty;
-  document.getElementById('f-reorder').value = item.reorderAt;
-  document.getElementById('f-max').value = item.maxStock || '';
-  document.getElementById('f-unit').value = item.unit || 'each';
-  document.getElementById('f-cost').value = item.cost != null ? item.cost : '';
-  document.getElementById('f-vendor').value = item.vendor || '';
+  document.getElementById('modal-title').textContent  = 'Edit Item';
+  document.getElementById('f-name').value      = item.name;
+  document.getElementById('f-qty').value       = item.qty;
+  document.getElementById('f-reorder').value   = item.reorderAt;
+  document.getElementById('f-max').value       = item.maxStock || '';
+  document.getElementById('f-unit').value      = item.unit || 'each';
+  document.getElementById('f-cost').value      = item.cost != null ? item.cost : '';
   document.getElementById('f-vendorUrl').value = item.vendorUrl || '';
-  document.getElementById('f-location').value = item.location || '';
-  document.getElementById('f-notes').value = item.notes || '';
+  document.getElementById('f-location').value  = item.location || '';
+  document.getElementById('f-notes').value     = item.notes || '';
   populateCatSelect('f-cat', item.category);
+  populateVendorSelect(item.vendor || '');
   document.getElementById('item-modal').classList.add('open');
 }
 
@@ -2057,20 +2148,29 @@ function closeModal() {
 }
 
 function saveItem() {
-  const name = document.getElementById('f-name').value.trim();
-  const qty = parseInt(document.getElementById('f-qty').value) || 0;
+  const name      = document.getElementById('f-name').value.trim();
+  const qty       = parseInt(document.getElementById('f-qty').value) || 0;
   const reorderAt = parseInt(document.getElementById('f-reorder').value) || 5;
-  const maxStock = parseInt(document.getElementById('f-max').value) || 0;
-  const unit = document.getElementById('f-unit').value.trim() || 'each';
-  const costRaw = document.getElementById('f-cost').value;
-  const cost = costRaw !== '' ? parseFloat(costRaw) : null;
-  const vendor = document.getElementById('f-vendor').value.trim();
+  const maxStock  = parseInt(document.getElementById('f-max').value) || 0;
+  const unit      = document.getElementById('f-unit').value.trim() || 'each';
+  const costRaw   = document.getElementById('f-cost').value;
+  const cost      = costRaw !== '' ? parseFloat(costRaw) : null;
+  const vendor    = getModalVendor();
   const vendorUrl = document.getElementById('f-vendorUrl').value.trim();
-  const location = document.getElementById('f-location').value.trim();
-  const notes = document.getElementById('f-notes').value.trim();
-  const category = document.getElementById('f-cat').value;
+  const location  = document.getElementById('f-location').value.trim();
+  const notes     = document.getElementById('f-notes').value.trim();
+  const category  = document.getElementById('f-cat').value;
 
   if (!name) { toast('Item name is required', true); return; }
+
+  // If a new vendor was typed that isn't in the list, offer to save it
+  if (vendor && !(settings.vendors || []).includes(vendor)) {
+    if (confirm(`"${vendor}" is not in your vendor list. Add it for future use?`)) {
+      if (!settings.vendors) settings.vendors = [];
+      settings.vendors.push(vendor);
+      saveSettingsData(settings);
+    }
+  }
 
   let savedItem;
   if (editingId) {
