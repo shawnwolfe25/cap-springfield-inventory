@@ -731,6 +731,46 @@
   }
   .login-btn:hover { background: var(--gold-light); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(201,162,39,0.35); }
   .login-btn:active { transform: scale(0.98); }
+  .login-btn-readonly {
+    width: 100%;
+    padding: 11px;
+    background: transparent;
+    color: var(--gray);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 10px;
+    font-family: 'Oswald', sans-serif;
+    font-size: 0.88rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.15s;
+    margin-bottom: 14px;
+  }
+  .login-btn-readonly:hover { color: var(--white); border-color: rgba(255,255,255,0.35); background: rgba(255,255,255,0.05); }
+  .login-btn-readonly:active { transform: scale(0.98); }
+
+  /* ─── READ-ONLY MODE ─── */
+  .readonly-banner {
+    background: linear-gradient(90deg, rgba(245,158,11,0.15), rgba(245,158,11,0.08));
+    border-bottom: 2px solid var(--warn);
+    padding: 7px 16px;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    font-size: 0.78rem;
+    color: var(--warn);
+    font-family: 'Oswald', sans-serif;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+  .readonly-banner.show { display: flex; }
+  body.readonly .readonly-hide { display: none !important; }
+  body.readonly .fab { display: none !important; }
+  .readonly-show { display: none; }
+  body.readonly .readonly-show { display: inline !important; }
   .login-footer {
     font-size: 0.72rem;
     color: var(--gray);
@@ -766,6 +806,12 @@
     </div>
     <div class="login-error" id="login-error"></div>
     <button class="login-btn" onclick="submitLogin()">Sign In</button>
+    <div style="display:flex;align-items:center;gap:10px;margin:4px 0 12px;">
+      <div style="flex:1;height:1px;background:rgba(255,255,255,0.1);"></div>
+      <span style="font-size:0.72rem;color:var(--gray);letter-spacing:0.08em;text-transform:uppercase;">or</span>
+      <div style="flex:1;height:1px;background:rgba(255,255,255,0.1);"></div>
+    </div>
+    <button class="login-btn-readonly" onclick="enterReadOnly()">👁 View Inventory (Read Only)</button>
     <div class="login-footer">Springfield Civil Air Patrol · Composite Squadron</div>
   </div>
 </div>
@@ -773,6 +819,11 @@
 <!-- HEADER -->
 <header>
   <div style="background: linear-gradient(135deg, var(--navy) 0%, var(--navy-mid) 100%);">
+    <!-- Read-only banner -->
+    <div class="readonly-banner" id="readonly-banner">
+      👁 Read Only Mode — Sign in to make changes
+      <button onclick="showLoginFromReadonly()" style="background:var(--warn);color:var(--navy);border:none;border-radius:5px;padding:3px 10px;font-family:'Oswald',sans-serif;font-size:0.72rem;font-weight:700;letter-spacing:0.06em;cursor:pointer;text-transform:uppercase;">Sign In</button>
+    </div>
     <div class="header-inner">
       <svg class="cap-emblem" viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
         <circle cx="28" cy="28" r="27" fill="#0a1628" stroke="#c9a227" stroke-width="2"/>
@@ -786,9 +837,9 @@
       <div class="header-actions">
         <div id="sync-indicator" style="display:flex;align-items:center;padding:0 4px;"></div>
         <button class="btn btn-ghost btn-sm" onclick="syncFromSheets(false)" title="Sync from Google Sheets">⟳ <span class="header-btn-label">Sync</span></button>
-        <button class="btn btn-gold" onclick="openAddModal()">＋ <span class="header-btn-label">Add Item</span></button>
-        <button class="btn btn-ghost btn-sm" onclick="exportData()" title="Export backup">⬇ <span class="header-btn-label">Export</span></button>
-        <button class="btn btn-ghost btn-sm" onclick="logout()" title="Sign out" style="color:var(--danger);border-color:rgba(239,68,68,0.3);">⏻</button>
+        <button class="btn btn-gold readonly-hide" onclick="openAddModal()">＋ <span class="header-btn-label">Add Item</span></button>
+        <button class="btn btn-ghost btn-sm readonly-hide" onclick="exportData()" title="Export backup">⬇ <span class="header-btn-label">Export</span></button>
+        <button class="btn btn-ghost btn-sm readonly-hide" onclick="logout()" title="Sign out" style="color:var(--danger);border-color:rgba(239,68,68,0.3);">⏻</button>
       </div>
     </div>
     <div style="max-width:1400px; margin:0 auto;">
@@ -796,7 +847,7 @@
         <button class="nav-tab active" onclick="showPage('dashboard')">📊 Dashboard</button>
         <button class="nav-tab" onclick="showPage('inventory')">📦 Inventory</button>
         <button class="nav-tab" onclick="showPage('report')">📋 Report</button>
-        <button class="nav-tab" onclick="showPage('settings')">⚙ Settings</button>
+        <button class="nav-tab readonly-hide" onclick="showPage('settings')">⚙ Settings</button>
       </div>
     </div>
   </div>
@@ -813,7 +864,7 @@
   <div id="alert-banner"></div>
   <div class="section-head">
     <h2>Low Stock Items</h2>
-    <button class="btn btn-primary btn-sm" onclick="sendNotificationEmail()">📧 <span class="header-btn-label">Send Order Reminder</span></button>
+    <button class="btn btn-primary btn-sm readonly-hide" onclick="sendNotificationEmail()">📧 <span class="header-btn-label">Send Order Reminder</span></button>
   </div>
   <!-- Desktop table -->
   <div class="table-wrap desktop-only">
@@ -1409,7 +1460,7 @@ function renderInventory() {
       </td>
       <td class="right">
         <div class="qty-cell" style="justify-content:flex-end;">
-          <div class="qty-controls">
+          <div class="qty-controls readonly-hide">
             <button class="qty-btn" onclick="adjustQty('${i.id}', -1)">−</button>
             <button class="qty-btn" onclick="adjustQty('${i.id}', 1)">+</button>
           </div>
@@ -1427,7 +1478,7 @@ function renderInventory() {
       <td style="font-size:0.82rem;color:var(--gray);max-width:140px;">${i.location ? `<span style="color:var(--white);">📍 ${i.location}</span>` : '—'}</td>
       <td>${statusBadge(i)}</td>
       <td style="color:var(--gray);font-size:0.82rem;max-width:160px;">${i.notes || '—'}</td>
-      <td class="right" style="white-space:nowrap;">
+      <td class="right readonly-hide" style="white-space:nowrap;">
         <button class="btn btn-ghost btn-sm" onclick="openEditModal('${i.id}')">✎ Edit</button>
         <button class="btn btn-danger btn-sm" onclick="deleteItem('${i.id}')">✕</button>
       </td>
@@ -1504,15 +1555,16 @@ function renderInventoryCards(filtered) {
         ${i.notes ? `<span style="grid-column:1/-1;color:var(--gray);font-style:italic;">${i.notes}</span>` : ''}
       </div>
       <div class="item-card-actions">
-        <div class="qty-cell">
+        <div class="qty-cell readonly-hide">
           <div class="qty-controls">
             <button class="qty-btn" onclick="adjustQty('${i.id}', -1)">−</button>
             <button class="qty-btn" onclick="adjustQty('${i.id}', 1)">+</button>
           </div>
           <span class="qty-num" style="${i.qty===0?'color:var(--danger)':i.qty<=i.reorderAt?'color:var(--warn)':''}">${i.qty}</span>
         </div>
-        <button class="btn btn-ghost btn-sm" onclick="openEditModal('${i.id}')">✎ Edit</button>
-        <button class="btn btn-danger btn-sm" onclick="deleteItem('${i.id}')">✕</button>
+        <span class="qty-num readonly-show" style="${i.qty===0?'color:var(--danger)':i.qty<=i.reorderAt?'color:var(--warn)':''}">${i.qty}</span>
+        <button class="btn btn-ghost btn-sm readonly-hide" onclick="openEditModal('${i.id}')">✎ Edit</button>
+        <button class="btn btn-danger btn-sm readonly-hide" onclick="deleteItem('${i.id}')">✕</button>
       </div>
     </div>
   `}).join('');
@@ -2248,46 +2300,57 @@ function showInventoryValue() {
 }
 
 // ════════════════════════════════════════════════════
-// AUTHENTICATION  —  single shared password
+// AUTHENTICATION  —  single shared password + read-only
 // ════════════════════════════════════════════════════
 
 // ▼▼▼  CHANGE THIS PASSWORD  ▼▼▼
 const APP_PASSWORD = 'CAPIL036!';
 // ▲▲▲  CHANGE THIS PASSWORD  ▲▲▲
 
-const SESSION_KEY = 'cap_auth';
+const SESSION_KEY    = 'cap_auth';
+const READONLY_KEY   = 'cap_readonly';
 
-function isLoggedIn() {
-  return sessionStorage.getItem(SESSION_KEY) === 'true';
+function isLoggedIn()   { return sessionStorage.getItem(SESSION_KEY)  === 'true'; }
+function isReadOnly()   { return sessionStorage.getItem(READONLY_KEY) === 'true'; }
+
+function applyReadOnlyMode(on) {
+  if (on) {
+    document.body.classList.add('readonly');
+    document.getElementById('readonly-banner')?.classList.add('show');
+  } else {
+    document.body.classList.remove('readonly');
+    document.getElementById('readonly-banner')?.classList.remove('show');
+  }
 }
 
 function checkAuth() {
   const screen = document.getElementById('login-screen');
   if (isLoggedIn()) {
     screen.classList.add('hidden');
+    applyReadOnlyMode(false);
+  } else if (isReadOnly()) {
+    screen.classList.add('hidden');
+    applyReadOnlyMode(true);
   } else {
     screen.classList.remove('hidden');
-    // Focus password field after a short delay
     setTimeout(() => document.getElementById('login-password')?.focus(), 100);
   }
 }
 
 function submitLogin() {
-  const input = document.getElementById('login-password');
+  const input   = document.getElementById('login-password');
   const errorEl = document.getElementById('login-error');
-  const val = input.value;
+  const val     = input.value;
 
-  if (!val) {
-    showLoginError('Please enter the password.');
-    return;
-  }
+  if (!val) { showLoginError('Please enter the password.'); return; }
 
   if (val === APP_PASSWORD) {
     sessionStorage.setItem(SESSION_KEY, 'true');
+    sessionStorage.removeItem(READONLY_KEY);
     document.getElementById('login-screen').classList.add('hidden');
     errorEl.textContent = '';
     input.value = '';
-    // Kick off data sync now that user is authenticated
+    applyReadOnlyMode(false);
     setSyncStatus('syncing', 'Loading…');
     syncFromSheets(true);
   } else {
@@ -2297,8 +2360,27 @@ function submitLogin() {
   }
 }
 
+function enterReadOnly() {
+  sessionStorage.setItem(READONLY_KEY, 'true');
+  sessionStorage.removeItem(SESSION_KEY);
+  document.getElementById('login-screen').classList.add('hidden');
+  applyReadOnlyMode(true);
+  setSyncStatus('syncing', 'Loading…');
+  syncFromSheets(true);
+}
+
+// Called from the "Sign In" button inside the read-only banner
+function showLoginFromReadonly() {
+  sessionStorage.removeItem(READONLY_KEY);
+  const screen = document.getElementById('login-screen');
+  screen.classList.remove('hidden');
+  document.getElementById('login-error').textContent = '';
+  document.getElementById('login-password').value = '';
+  setTimeout(() => document.getElementById('login-password')?.focus(), 100);
+}
+
 function showLoginError(msg) {
-  const input = document.getElementById('login-password');
+  const input   = document.getElementById('login-password');
   const errorEl = document.getElementById('login-error');
   errorEl.textContent = msg;
   input.classList.add('error');
@@ -2307,14 +2389,16 @@ function showLoginError(msg) {
 
 function toggleLoginVisibility() {
   const input = document.getElementById('login-password');
-  input.type = input.type === 'password' ? 'text' : 'password';
+  input.type  = input.type === 'password' ? 'text' : 'password';
 }
 
 function logout() {
   if (!confirm('Sign out of the inventory system?')) return;
   sessionStorage.removeItem(SESSION_KEY);
+  sessionStorage.removeItem(READONLY_KEY);
+  applyReadOnlyMode(false);
   document.getElementById('login-screen').classList.remove('hidden');
-  document.getElementById('login-password').value = '';
+  document.getElementById('login-password').value  = '';
   document.getElementById('login-error').textContent = '';
   setTimeout(() => document.getElementById('login-password')?.focus(), 100);
 }
@@ -2324,8 +2408,7 @@ function logout() {
 // ════════════════════════════════════════════════════
 checkAuth();
 renderDashboard();
-// Only sync on load if already authenticated
-if (isLoggedIn()) {
+if (isLoggedIn() || isReadOnly()) {
   setSyncStatus('syncing', 'Loading…');
   syncFromSheets(true);
 }</script>
