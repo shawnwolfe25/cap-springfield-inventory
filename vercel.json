@@ -1,0 +1,28 @@
+{
+  "name": "Springfield CAP Inventory",
+  "description": "Civil Air Patrol Squadron Inventory Management System",
+  "env": {
+    "REACT_APP_KV_URL": {
+      "description": "Vercel KV API URL",
+      "required": false
+    },
+    "REACT_APP_KV_TOKEN": {
+      "description": "Vercel KV authentication token",
+      "required": false
+    },
+    "REACT_APP_EMAILJS_PUBLIC_KEY": {
+      "description": "EmailJS public key for email notifications",
+      "required": false
+    },
+    "REACT_APP_EMAILJS_SERVICE_ID": {
+      "description": "EmailJS service ID",
+      "required": false
+    },
+    "REACT_APP_EMAILJS_TEMPLATE_ID": {
+      "description": "EmailJS template ID",
+      "required": false
+    }
+  },
+  "buildCommand": "echo 'Static site - no build needed'",
+  "outputDirectory": "."
+}
