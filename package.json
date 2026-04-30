@@ -1,0 +1,12 @@
+{
+  "name": "cap-springfield-inventory",
+  "version": "1.0.0",
+  "description": "Springfield Civil Air Patrol — Inventory Management System",
+  "private": true,
+  "dependencies": {
+    "@vercel/kv": "^1.0.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
