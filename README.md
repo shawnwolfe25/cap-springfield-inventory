@@ -1,265 +1,81 @@
-# Springfield CAP Inventory Management System
+# Springfield Civil Air Patrol — Inventory Management System
 
-Civil Air Patrol Squadron Inventory Management System for tracking squadron supplies, equipment, and resources.
-
-**Version:** 1.0.0  
-**Deployed on:** Vercel  
-**Data Storage:** Vercel KV (with local fallback)  
-**Motto:** Semper Vigilans — Always Vigilant
+A web-based inventory tracking application for the Springfield CAP Squadron. Tracks ribbons, ribbon racks, insignia, uniforms, and supplies with automatic low-stock email alerts.
 
 ---
 
-## Features
+## Data Isolation
 
-✅ **Real-Time Inventory Tracking** — Add, edit, and manage inventory items  
-✅ **Smart Categorization** — Organize items by custom categories  
-✅ **Stock Alerts** — Automatic low-stock and out-of-stock alerts  
-✅ **Reporting** — Generate CSV, JSON, and printable reports  
-✅ **Cloud Storage** — Shared data across all squadron members via Vercel KV  
-✅ **Email Notifications** — Optional EmailJS integration for low-stock alerts  
-✅ **Data Export/Import** — Backup and restore inventory data  
-✅ **Responsive Design** — Works on desktop, tablet, and mobile devices
+This application is fully isolated from the Bloomington squadron's inventory. Data separation is enforced at two levels:
+
+1. **Separate Vercel project** — this app is deployed to its own URL with its own KV database instance.
+2. **Namespaced keys** — even if both squadrons somehow shared a KV store, this app reads and writes only to keys prefixed `cap:springfield:*`. Bloomington uses `cap:*` with no squadron prefix.
+
+Neither squadron can view, modify, or access the other's inventory data.
 
 ---
 
-## Quick Start
+## Deployment Steps
 
-### Prerequisites
+### 1. Create the GitHub repository
 
-- GitHub account
-- Vercel account (free tier available)
-- Git installed locally
+1. Go to [github.com](https://github.com) and click **New repository**.
+2. Name it `cap-springfield-inventory` (or similar).
+3. Keep it **Private** if desired.
+4. Click **Create repository**.
+5. Upload all the files in this folder — `api/items.js`, `vercel.json`, `package.json`, `public/index.html`, and this `README.md`. Preserve the folder structure (`api/` and `public/` as subdirectories).
 
-### Deployment Steps
+### 2. Create the Vercel project
 
-#### 1. Fork or Clone the Repository
+1. Go to [vercel.com](https://vercel.com) and sign in with GitHub.
+2. Click **Add New → Project**.
+3. Select the `cap-springfield-inventory` repository you just created.
+4. Leave all default settings. Vercel will auto-detect the Node.js API functions.
+5. Click **Deploy**.
 
-```bash
-git clone https://github.com/shawnwolfe25/cap-springfield-inventory.git
-cd cap-springfield-inventory
-```
+### 3. Connect Vercel KV (the database)
 
-#### 2. Push to GitHub
+1. In your Vercel project dashboard, click the **Storage** tab.
+2. Click **Create Database → KV (Redis)**.
+3. Name it `cap-springfield-kv` and select the region closest to Illinois (likely **Washington, D.C. — iad1**).
+4. Click **Create**.
+5. On the next screen, click **Connect Project** and choose `cap-springfield-inventory`.
+6. Vercel will automatically add the required environment variables.
+7. Go to the **Deployments** tab and click **Redeploy** on the most recent deployment so it picks up the new KV connection.
 
-```bash
-git remote add origin https://github.com/shawnwolfe25/cap-springfield-inventory.git
-git branch -M main
-git push -u origin main
-```
+### 4. Open the app
 
-#### 3. Deploy to Vercel
-
-1. Go to [vercel.com](https://vercel.com)
-2. Click **"Add New Project"**
-3. Select **"Import Git Repository"**
-4. Choose `shawnwolfe25/cap-springfield-inventory`
-5. Configure project:
-   - **Project Name:** `cap-springfield-inventory`
-   - **Framework Preset:** Other (Static)
-   - **Root Directory:** `./`
-6. Click **"Deploy"**
-
-Your app will be live at: **https://cap-springfield-inventory.vercel.app/**
+Your app will be live at `https://cap-springfield-inventory.vercel.app` (or similar URL shown in Vercel). Bookmark it and share with squadron members.
 
 ---
 
-## Setup Instructions
+## Using the App
 
-### Configure Vercel KV (Optional but Recommended)
-
-For shared, persistent data across all squadron members:
-
-1. In your Vercel project, go to **Settings → Integrations**
-2. Add **Vercel KV** (or Upstash Redis)
-3. Copy your KV credentials
-4. In Vercel **Settings → Environment Variables**, add:
-   - `REACT_APP_KV_URL` = your KV API URL
-   - `REACT_APP_KV_TOKEN` = your KV token
-
-### Configure EmailJS (Optional)
-
-For automatic low-stock email notifications:
-
-1. Sign up at [emailjs.com](https://www.emailjs.com/)
-2. Create an email service and template
-3. Add environment variables:
-   - `REACT_APP_EMAILJS_PUBLIC_KEY`
-   - `REACT_APP_EMAILJS_SERVICE_ID`
-   - `REACT_APP_EMAILJS_TEMPLATE_ID`
-
-### Local Development
-
-1. Clone the repository:
-```bash
-git clone https://github.com/shawnwolfe25/cap-springfield-inventory.git
-cd cap-springfield-inventory
-```
-
-2. Open `index.html` in a browser or use a local server:
-```bash
-python -m http.server 8000
-# or
-npx http-server
-```
-
-3. Navigate to `http://localhost:8000`
+- **Dashboard** — quick view of all inventory with status
+- **Inventory** — add, edit, and adjust quantities
+- **Report** — sortable report with PDF, CSV, and print export
+- **Settings** — configure email recipients, EmailJS credentials, categories, and test the cloud connection
 
 ---
 
-## Usage
+## Color Scheme
 
-### Dashboard
-Quick overview of inventory status with key metrics:
-- Total items
-- In stock count
-- Low stock items
-- Out of stock items
+The interface uses the four official Civil Air Patrol colors per CAPR 110-3 Brand Identity Program:
 
-### Inventory
-Manage your squadron's items:
-- Add new items with details (name, category, quantity, cost, vendor, location)
-- Edit existing items
-- Delete items
-- Filter by category or stock status
-- View detailed item information
-
-### Report
-Generate and export reports:
-- View complete inventory table
-- Export as CSV for spreadsheet software
-- Export as JSON for backup
-- Print formatted inventory
-- Calculate total inventory value
-
-### Settings
-Configure the app:
-- **Cloud Storage:** Test Vercel KV connection
-- **Email Notifications:** Configure EmailJS for alerts
-- **Categories:** Add or remove custom item categories
-- **Data Management:** Export backups, import data, reset to defaults
-- **About:** View app version and contact information
+| Color | Pantone | Hex |
+|---|---|---|
+| Ultramarine Blue | Reflex Blue C | `#001489` |
+| Air Force Yellow | 116 C | `#FFCD00` |
+| Pimento Red | 200 C | `#BA0C2F` |
+| Silver Gray | 422 C | `#9EA2A2` |
 
 ---
 
-## File Structure
+## Cost
 
-```
-cap-springfield-inventory/
-├── index.html                 # Main HTML entry point
-├── .env.local.example         # Environment variables template
-├── vercel.json               # Vercel deployment config
-├── README.md                 # This file
-├── styles/
-│   └── main.css             # All styling
-└── js/
-    ├── config.js            # Application configuration
-    ├── storage.js           # Vercel KV & localStorage management
-    ├── ui.js                # UI rendering and interactions
-    └── app.js               # Main application initialization
-```
+Free, within Vercel's Hobby tier limits (generous for squadron-level usage):
+- 100 GB-hours of serverless function execution per month
+- 30,000 KV commands per day
+- Unlimited static site bandwidth (within fair use)
 
----
-
-## How It Works
-
-### Data Storage Architecture
-
-**Without Vercel KV (Local Mode):**
-- Data stored in browser localStorage
-- Each user has separate inventory
-- Data persists on device
-
-**With Vercel KV (Cloud Mode):**
-- All squadron members see the same inventory
-- Real-time synchronization
-- Data accessible from any device
-- Automatic backup in cloud
-
-### Workflow
-
-1. **StorageManager** (`js/storage.js`) handles all data operations
-2. **UIManager** (`js/ui.js`) renders pages and handles user interactions
-3. **Config** (`js/config.js`) stores app settings and defaults
-4. **App** (`js/app.js`) initializes everything on page load
-
----
-
-## Customization
-
-### Change Squadron Name
-
-Edit `js/config.js`:
-```javascript
-SQUADRON: 'Springfield Civil Air Patrol'
-```
-
-### Add Custom Categories
-
-Via the Settings page in the app, or edit `js/config.js`:
-```javascript
-DEFAULT_CATEGORIES: [
-    'Office Supplies',
-    'Your Category Here',
-    // ...
-]
-```
-
-### Update Colors & Theme
-
-Edit CSS variables in `styles/main.css`:
-```css
-:root {
-    --primary: #1e3a5f;      /* Main blue */
-    --accent: #c41e3a;       /* Red accent */
-    /* ... other colors */
-}
-```
-
-### Update Contact Email
-
-Edit `js/ui.js` in the Settings section:
-```javascript
-<a href="mailto:commander@springfield.cap.gov?subject=...">
-```
-
----
-
-## Troubleshooting
-
-### App Shows 404 on Vercel
-
-1. Check that GitHub Pages is **disabled** (Settings → Pages)
-2. Ensure `index.html` is at the root directory
-3. Re-deploy from Vercel dashboard
-
-### Data Not Persisting
-
-- **Local mode:** Browser localStorage may be cleared. Try exporting data as JSON backup.
-- **Cloud mode:** Check that `REACT_APP_KV_TOKEN` is set in Vercel environment variables
-
-### EmailJS Not Sending
-
-1. Verify environment variables are set correctly
-2. Test connection from Settings page
-3. Check EmailJS dashboard for sent emails
-4. Ensure email recipients are configured
-
----
-
-## Support & Feedback
-
-For suggestions or issues, contact:  
-**commander@springfield.cap.gov**
-
----
-
-## License
-
-Civil Air Patrol - Springfield Squadron  
-For internal squadron use only.
-
----
-
-**Last Updated:** April 2026  
-**Maintained by:** Springfield Civil Air Patrol Squadron  
-**Version:** 1.0.0
+No credit card required.

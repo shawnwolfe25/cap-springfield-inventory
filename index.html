@@ -1,0 +1,1815 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Springfield CAP — Inventory</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Source+Sans+3:wght@300;400;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.1/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<style>
+  /* ═══════════════════════════════════════════════════════════
+     OFFICIAL CIVIL AIR PATROL COLORS (per CAPR 110-3 / Brand Guide)
+     • Ultramarine Blue (Pantone Reflex Blue C)  #001489
+     • Air Force Yellow (Pantone 116 C)          #FFCD00
+     • Pimento Red      (Pantone 200 C)          #BA0C2F
+     • Silver Gray      (Pantone 422 C)          #9EA2A2
+     ═══════════════════════════════════════════════════════════ */
+  :root {
+    --cap-blue:       #001489;  /* Ultramarine Blue — Pantone Reflex Blue C */
+    --cap-gold:       #FFCD00;  /* Air Force Yellow — Pantone 116 C */
+    --cap-red:        #BA0C2F;  /* Pimento Red — Pantone 200 C */
+    --cap-silver:     #9EA2A2;  /* Silver Gray — Pantone 422 C */
+
+    --navy:           #050b24;
+    --navy-mid:       #0a1340;
+    --navy-light:     #162068;
+    --blue:           var(--cap-blue);
+    --blue-bright:    #2563eb;
+    --gold:           var(--cap-gold);
+    --gold-light:     #ffd94a;
+    --gold-pale:      #fff3b0;
+    --red:            var(--cap-red);
+    --red-bright:     #e02040;
+    --white:          #f0f4ff;
+    --gray:           #8fa0b8;
+    --gray-light:     #c5d0e0;
+    --surface:        #0f1a3a;
+    --surface2:       #182654;
+    --warn-bg:        #3a1f08;
+    --warn:           #f59e0b;
+    --ok-bg:          #072a1a;
+    --ok:             #10b981;
+    --danger-bg:      #2a0808;
+    --danger:         #ef4444;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 16px; }
+  body {
+    background: var(--navy);
+    color: var(--white);
+    font-family: 'Source Sans 3', sans-serif;
+    font-weight: 300;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ─── HEADER ─── */
+  header {
+    background: linear-gradient(135deg, var(--navy) 0%, var(--navy-mid) 55%, var(--cap-blue) 100%);
+    border-bottom: 3px solid var(--cap-gold);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.5);
+  }
+  .header-inner {
+    max-width: 1400px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 12px 20px;
+  }
+  .cap-emblem {
+    width: 52px;
+    height: 52px;
+    flex-shrink: 0;
+  }
+  .header-title { flex: 1; min-width: 0; }
+  .header-title h1 {
+    font-family: 'Oswald', sans-serif;
+    font-size: 1.35rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: var(--white);
+    line-height: 1.1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .header-title p {
+    font-size: 0.7rem;
+    color: var(--cap-gold);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    font-weight: 600;
+    margin-top: 2px;
+  }
+  #sync-indicator {
+    padding: 4px 10px;
+    background: rgba(0,0,0,0.25);
+    border-radius: 12px;
+    border: 1px solid rgba(255,205,0,0.25);
+  }
+
+  /* ─── NAV TABS ─── */
+  .nav-tabs {
+    background: var(--navy-mid);
+    border-bottom: 1px solid rgba(255,205,0,0.2);
+    display: flex;
+    max-width: 1400px;
+    margin: 0 auto;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .nav-tabs::-webkit-scrollbar { display: none; }
+  .nav-tab {
+    padding: 14px 22px;
+    background: none;
+    border: none;
+    color: var(--gray);
+    font-family: 'Oswald', sans-serif;
+    font-size: 0.85rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    transition: all 0.15s;
+    white-space: nowrap;
+    font-weight: 500;
+  }
+  .nav-tab:hover { color: var(--white); }
+  .nav-tab.active {
+    color: var(--cap-gold);
+    border-bottom-color: var(--cap-gold);
+    background: rgba(0,20,137,0.4);
+  }
+
+  /* ─── LAYOUT ─── */
+  main {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+  .page { display: none; }
+  .page.active { display: block; }
+
+  .page-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+  .page-head h2 {
+    font-family: 'Oswald', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    color: var(--white);
+  }
+  .page-head h2 .accent { color: var(--cap-gold); }
+  .page-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  /* ─── STAT CARDS ─── */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .stat-card {
+    background: linear-gradient(135deg, var(--surface) 0%, var(--surface2) 100%);
+    border: 1px solid rgba(255,205,0,0.18);
+    border-radius: 10px;
+    padding: 16px 18px;
+    position: relative;
+    overflow: hidden;
+  }
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 3px; height: 100%;
+    background: var(--cap-gold);
+  }
+  .stat-card.warn::before { background: var(--warn); }
+  .stat-card.danger::before { background: var(--cap-red); }
+  .stat-card.ok::before { background: var(--ok); }
+  .stat-label {
+    font-size: 0.72rem;
+    color: var(--gray);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+  .stat-value {
+    font-family: 'Oswald', sans-serif;
+    font-size: 1.8rem;
+    font-weight: 600;
+    color: var(--white);
+    line-height: 1;
+  }
+  .stat-value.warn { color: var(--warn); }
+  .stat-value.danger { color: var(--red-bright); }
+  .stat-value.ok { color: var(--ok); }
+
+  /* ─── FILTERS ROW ─── */
+  .filters {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .search-box {
+    flex: 1;
+    min-width: 200px;
+    position: relative;
+  }
+  .search-box input {
+    width: 100%;
+    padding: 10px 14px 10px 38px;
+    background: var(--surface);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 8px;
+    color: var(--white);
+    font-family: inherit;
+    font-size: 0.9rem;
+  }
+  .search-box input:focus {
+    outline: none;
+    border-color: var(--cap-gold);
+  }
+  .search-box::before {
+    content: '🔍';
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.9rem;
+    opacity: 0.6;
+  }
+  select, .select {
+    padding: 10px 14px;
+    background: var(--surface);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 8px;
+    color: var(--white);
+    font-family: inherit;
+    font-size: 0.9rem;
+    cursor: pointer;
+  }
+  select:focus { outline: none; border-color: var(--cap-gold); }
+
+  /* ─── INVENTORY CARDS (mobile default) ─── */
+  .items-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .item-card {
+    background: var(--surface);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-left: 3px solid var(--cap-gold);
+    border-radius: 10px;
+    padding: 14px 16px;
+    transition: border-color 0.15s;
+  }
+  .item-card.low { border-left-color: var(--warn); }
+  .item-card.out { border-left-color: var(--cap-red); }
+  .item-card.ok  { border-left-color: var(--ok); }
+  .item-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  .item-name {
+    font-family: 'Oswald', sans-serif;
+    font-size: 1.02rem;
+    font-weight: 500;
+    color: var(--white);
+    letter-spacing: 0.02em;
+  }
+  .item-meta {
+    font-size: 0.75rem;
+    color: var(--gray);
+    margin-top: 3px;
+  }
+  .status-badge {
+    display: inline-block;
+    padding: 3px 9px;
+    border-radius: 10px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .status-ok    { background: var(--ok-bg);     color: var(--ok); }
+  .status-low   { background: var(--warn-bg);   color: var(--warn); }
+  .status-out   { background: var(--danger-bg); color: var(--red-bright); }
+  .item-body {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 10px;
+    align-items: center;
+  }
+  .qty-block {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(0,0,0,0.25);
+    border-radius: 8px;
+    padding: 4px;
+  }
+  .qty-btn {
+    width: 34px; height: 34px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.12);
+    color: var(--white);
+    font-size: 1.1rem;
+    font-weight: 600;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s;
+    -webkit-tap-highlight-color: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .qty-btn:hover { background: rgba(255,205,0,0.15); border-color: var(--cap-gold); }
+  .qty-btn:active { transform: scale(0.93); }
+  .qty-value {
+    min-width: 44px;
+    text-align: center;
+    font-family: 'Oswald', sans-serif;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--white);
+  }
+  .item-detail {
+    font-size: 0.78rem;
+    color: var(--gray-light);
+    margin-top: 6px;
+    padding-top: 8px;
+    border-top: 1px dashed rgba(255,255,255,0.08);
+  }
+  .item-detail strong { color: var(--cap-gold); font-weight: 600; }
+  .item-detail a { color: var(--gold-light); text-decoration: none; }
+  .item-detail a:hover { text-decoration: underline; }
+  .item-actions {
+    display: flex;
+    gap: 6px;
+    margin-top: 10px;
+    justify-content: flex-end;
+  }
+
+  /* ─── BUTTONS ─── */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border-radius: 7px;
+    font-family: 'Oswald', sans-serif;
+    font-size: 0.78rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    border: none;
+    transition: all 0.15s;
+    font-weight: 500;
+    white-space: nowrap;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn-primary { background: var(--blue-bright); color: white; }
+  .btn-primary:hover { background: #1d4ed8; box-shadow: 0 4px 12px rgba(37,99,235,0.4); }
+  .btn-gold { background: var(--cap-gold); color: var(--navy); font-weight: 700; }
+  .btn-gold:hover { background: var(--gold-light); }
+  .btn-danger { background: transparent; color: var(--danger); border: 1px solid rgba(239,68,68,0.4); }
+  .btn-danger:hover { background: var(--danger-bg); }
+  .btn-ghost { background: transparent; color: var(--gray); border: 1px solid rgba(255,255,255,0.12); }
+  .btn-ghost:hover { color: var(--white); border-color: rgba(255,255,255,0.3); }
+  .btn-sm { padding: 5px 10px; font-size: 0.7rem; }
+
+  /* ─── FAB (mobile add button) ─── */
+  .fab {
+    display: none;
+    position: fixed;
+    bottom: 20px;
+    right: 16px;
+    width: 56px; height: 56px;
+    background: var(--cap-gold);
+    color: var(--navy);
+    border: none;
+    border-radius: 50%;
+    font-size: 1.7rem;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 4px 20px rgba(255,205,0,0.45);
+    z-index: 90;
+    align-items: center;
+    justify-content: center;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .fab:active { transform: scale(0.93); }
+
+  /* ─── MODAL ─── */
+  .modal-backdrop {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(5,10,20,0.88);
+    z-index: 200;
+    align-items: flex-end;
+    justify-content: center;
+    padding: 0;
+  }
+  .modal-backdrop.open { display: flex; }
+  .modal {
+    background: var(--surface);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-top: 3px solid var(--cap-gold);
+    border-radius: 16px 16px 0 0;
+    width: 100%;
+    max-width: 600px;
+    max-height: 92vh;
+    overflow-y: auto;
+    box-shadow: 0 -10px 40px rgba(0,0,0,0.6);
+  }
+  .modal-head {
+    padding: 18px 20px 14px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    background: var(--surface);
+    z-index: 1;
+  }
+  .modal-head h3 {
+    font-family: 'Oswald', sans-serif;
+    font-size: 1.05rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--cap-gold);
+  }
+  .modal-close {
+    width: 34px; height: 34px;
+    border: none; background: rgba(255,255,255,0.08);
+    color: var(--gray); font-size: 1.2rem;
+    cursor: pointer; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .modal-close:hover { color: var(--white); }
+  .modal-body { padding: 16px 20px; }
+  .modal-footer {
+    padding: 14px 20px;
+    border-top: 1px solid rgba(255,255,255,0.08);
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    position: sticky;
+    bottom: 0;
+    background: var(--surface);
+  }
+  .field { margin-bottom: 14px; }
+  .field label {
+    display: block;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--cap-gold);
+    margin-bottom: 5px;
+    font-weight: 600;
+  }
+  .field input, .field select, .field textarea {
+    width: 100%;
+    padding: 10px 12px;
+    background: var(--navy);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 7px;
+    color: var(--white);
+    font-family: inherit;
+    font-size: 0.92rem;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus {
+    outline: none;
+    border-color: var(--cap-gold);
+  }
+  .field-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  /* ─── REPORT TABLE (desktop) ─── */
+  .report-wrap {
+    background: var(--surface);
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+  table.report {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+  }
+  .report thead th {
+    background: var(--cap-blue);
+    color: var(--cap-gold);
+    padding: 12px 14px;
+    text-align: left;
+    font-family: 'Oswald', sans-serif;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 600;
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+    border-bottom: 2px solid var(--cap-gold);
+  }
+  .report thead th:hover { background: var(--navy-light); }
+  .report thead th .sort-arrow { opacity: 0.4; margin-left: 4px; }
+  .report thead th.sorted .sort-arrow { opacity: 1; color: var(--cap-gold); }
+  .report tbody tr {
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    transition: background 0.1s;
+  }
+  .report tbody tr:nth-child(even) { background: rgba(0,0,0,0.15); }
+  .report tbody tr:hover { background: rgba(255,205,0,0.06); }
+  .report tbody td {
+    padding: 11px 14px;
+    color: var(--gray-light);
+  }
+  .report tbody td.name-col {
+    color: var(--white);
+    font-weight: 500;
+  }
+
+  /* ─── TOAST ─── */
+  .toast {
+    position: fixed;
+    bottom: 90px;
+    left: 50%;
+    transform: translateX(-50%) translateY(120%);
+    background: var(--surface2);
+    color: var(--white);
+    padding: 12px 20px;
+    border-radius: 10px;
+    border-left: 3px solid var(--cap-gold);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+    font-size: 0.9rem;
+    font-weight: 500;
+    z-index: 300;
+    transition: transform 0.3s;
+    max-width: 90vw;
+    text-align: center;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  .toast.error { border-left-color: var(--danger); }
+  .toast.warn  { border-left-color: var(--warn); }
+  .toast.ok    { border-left-color: var(--ok); }
+
+  /* ─── SETTINGS CARDS ─── */
+  .settings-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  .settings-card {
+    background: var(--surface);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 10px;
+    padding: 18px 20px;
+  }
+  .settings-card h3 {
+    font-family: 'Oswald', sans-serif;
+    font-size: 1rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--cap-gold);
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(255,205,0,0.15);
+  }
+  .settings-card p.hint {
+    font-size: 0.82rem;
+    color: var(--gray);
+    margin-bottom: 12px;
+    line-height: 1.5;
+  }
+  .email-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    padding: 8px 12px;
+    background: var(--navy);
+    border-radius: 6px;
+    margin-bottom: 6px;
+  }
+  .email-row span { flex: 1; font-size: 0.9rem; }
+
+  /* ─── DESKTOP BREAKPOINT ─── */
+  @media (min-width: 768px) {
+    .header-title h1 { font-size: 1.5rem; }
+    .items-grid {
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 14px;
+    }
+    .field-row {
+      grid-template-columns: 1fr 1fr 1fr;
+    }
+    .modal-backdrop {
+      align-items: center;
+      padding: 20px;
+    }
+    .modal {
+      border-radius: 14px;
+      border-top: 3px solid var(--cap-gold);
+      max-height: 90vh;
+    }
+  }
+  @media (max-width: 767px) {
+    .fab { display: flex; }
+    .page-head .page-actions .desktop-only { display: none; }
+  }
+
+  /* ─── PRINT STYLES (8.5 × 11) ─── */
+  @media print {
+    @page { size: letter; margin: 0.6in; }
+    html, body {
+      background: white !important;
+      color: black !important;
+      font-size: 11pt;
+    }
+    body > *:not(.print-root) { display: none !important; }
+    .print-root { display: block !important; }
+    .print-header {
+      border-bottom: 2px solid #001489;
+      padding-bottom: 12px;
+      margin-bottom: 14px;
+    }
+    .print-header h1 {
+      font-family: 'Oswald', sans-serif;
+      color: #001489;
+      font-size: 22pt;
+    }
+    .print-header p { color: #555; font-size: 10pt; }
+    .print-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 9pt;
+    }
+    .print-table thead th {
+      background: #001489 !important;
+      color: #FFCD00 !important;
+      padding: 6px 8px;
+      text-align: left;
+      border-bottom: 2px solid #FFCD00;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    .print-table tbody td {
+      padding: 5px 8px;
+      border-bottom: 1px solid #ddd;
+    }
+    .print-table tbody tr:nth-child(even) {
+      background: #f5f5f5 !important;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    .print-status {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 8pt;
+      font-weight: bold;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    .print-status.ok  { background: #d4f4dd; color: #0a6b32; }
+    .print-status.low { background: #fff3cd; color: #855a00; }
+    .print-status.out { background: #f8d7da; color: #721c24; }
+    .print-footer {
+      margin-top: 20px;
+      padding-top: 10px;
+      border-top: 1px solid #ccc;
+      font-size: 9pt;
+      color: #666;
+      display: flex;
+      justify-content: space-between;
+    }
+  }
+  .print-root { display: none; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════ HEADER ═══════════════════════ -->
+<header>
+  <div class="header-inner">
+    <svg class="cap-emblem" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <!-- CAP roundel: blue disc, white star, red center -->
+      <circle cx="50" cy="50" r="48" fill="#001489" stroke="#FFCD00" stroke-width="2"/>
+      <polygon points="50,12 59,40 88,40 65,57 74,85 50,68 26,85 35,57 12,40 41,40"
+               fill="#ffffff"/>
+      <circle cx="50" cy="50" r="10" fill="#BA0C2F"/>
+    </svg>
+    <div class="header-title">
+      <h1>BLOOMINGTON CAP</h1>
+      <p>Civil Air Patrol · Inventory</p>
+    </div>
+    <div id="sync-indicator"></div>
+  </div>
+  <nav class="nav-tabs">
+    <button class="nav-tab active" data-page="dashboard">Dashboard</button>
+    <button class="nav-tab" data-page="inventory">Inventory</button>
+    <button class="nav-tab" data-page="report">Report</button>
+    <button class="nav-tab" data-page="settings">Settings</button>
+  </nav>
+</header>
+
+<!-- ═══════════════════════ MAIN ═══════════════════════ -->
+<main>
+
+  <!-- ─── DASHBOARD ─── -->
+  <section class="page active" id="page-dashboard">
+    <div class="page-head">
+      <h2><span class="accent">▸</span> Dashboard</h2>
+    </div>
+    <div class="stats" id="stats"></div>
+
+    <div style="margin-top: 20px;">
+      <h3 style="font-family:'Oswald',sans-serif;font-size:1.1rem;letter-spacing:0.06em;text-transform:uppercase;color:var(--cap-gold);margin-bottom:12px;">
+        Quick Overview
+      </h3>
+      <div class="report-wrap">
+        <table class="report">
+          <thead>
+            <tr>
+              <th>Item</th>
+              <th style="text-align:right;">On Hand</th>
+              <th style="text-align:center;">Status</th>
+            </tr>
+          </thead>
+          <tbody id="dash-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── INVENTORY ─── -->
+  <section class="page" id="page-inventory">
+    <div class="page-head">
+      <h2><span class="accent">▸</span> Inventory</h2>
+      <div class="page-actions">
+        <button class="btn btn-gold desktop-only" onclick="openAddModal()">+ Add Item</button>
+      </div>
+    </div>
+    <div class="filters">
+      <div class="search-box">
+        <input type="text" id="search" placeholder="Search items…" oninput="renderInventory()">
+      </div>
+      <select id="filter-cat" onchange="renderInventory()">
+        <option value="all">All Categories</option>
+      </select>
+      <select id="filter-status" onchange="renderInventory()">
+        <option value="all">All Status</option>
+        <option value="ok">In Stock</option>
+        <option value="low">Low</option>
+        <option value="out">Out</option>
+      </select>
+    </div>
+    <div class="items-grid" id="items-grid"></div>
+  </section>
+
+  <!-- ─── REPORT ─── -->
+  <section class="page" id="page-report">
+    <div class="page-head">
+      <h2><span class="accent">▸</span> Report</h2>
+      <div class="page-actions">
+        <button class="btn btn-ghost" onclick="window.print()">🖨 Print</button>
+        <button class="btn btn-ghost" onclick="exportCSV()">⬇ CSV</button>
+        <button class="btn btn-gold" onclick="exportPDF()">⬇ PDF</button>
+      </div>
+    </div>
+    <div class="filters">
+      <select id="rep-cat" onchange="renderReport()">
+        <option value="all">All Categories</option>
+      </select>
+      <select id="rep-status" onchange="renderReport()">
+        <option value="all">All Status</option>
+        <option value="ok">In Stock</option>
+        <option value="low">Low Stock</option>
+        <option value="out">Out of Stock</option>
+      </select>
+    </div>
+    <div class="report-wrap">
+      <table class="report" id="report-table">
+        <thead>
+          <tr>
+            <th data-sort="name">Item <span class="sort-arrow">⇅</span></th>
+            <th data-sort="category">Category <span class="sort-arrow">⇅</span></th>
+            <th data-sort="qty" style="text-align:right;">On Hand <span class="sort-arrow">⇅</span></th>
+            <th data-sort="reorderAt" style="text-align:right;">Reorder <span class="sort-arrow">⇅</span></th>
+            <th data-sort="cost" style="text-align:right;">Unit $</th>
+            <th data-sort="total" style="text-align:right;">Total $</th>
+            <th data-sort="vendor">Vendor</th>
+            <th data-sort="location">Location</th>
+            <th data-sort="status" style="text-align:center;">Status</th>
+          </tr>
+        </thead>
+        <tbody id="report-body"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ─── SETTINGS ─── -->
+  <section class="page" id="page-settings">
+    <div class="page-head">
+      <h2><span class="accent">▸</span> Settings</h2>
+    </div>
+    <div class="settings-grid">
+
+      <div class="settings-card">
+        <h3>Cloud Storage</h3>
+        <p class="hint">
+          This app uses <strong style="color:var(--cap-gold)">Vercel KV</strong> for
+          shared persistent storage. All squadron members see the same inventory, live.
+          Data is isolated to the Springfield squadron and is not shared with any other unit.
+        </p>
+        <div id="connection-status"></div>
+        <button class="btn btn-ghost btn-sm" onclick="testConnection()" style="margin-top:8px;">Test Connection</button>
+      </div>
+
+      <div class="settings-card">
+        <h3>Email Notifications</h3>
+        <p class="hint">
+          Automatic low-stock alerts via EmailJS. Add recipients below, then enter
+          your EmailJS credentials to enable.
+        </p>
+        <div id="email-list" style="margin-bottom:10px;"></div>
+        <div style="display:flex;gap:8px;">
+          <input type="email" id="new-email" placeholder="email@example.com"
+                 style="flex:1;padding:9px 12px;background:var(--navy);border:1px solid rgba(255,255,255,0.12);border-radius:6px;color:var(--white);">
+          <button class="btn btn-gold btn-sm" onclick="addEmail()">Add</button>
+        </div>
+        <div style="margin-top:16px;padding-top:14px;border-top:1px dashed rgba(255,255,255,0.1);">
+          <div class="field">
+            <label>EmailJS Public Key</label>
+            <input type="text" id="ejs-pub" placeholder="user_xxxxxxxxxxxx">
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label>Service ID</label>
+              <input type="text" id="ejs-svc" placeholder="service_xxxxx">
+            </div>
+            <div class="field">
+              <label>Template ID</label>
+              <input type="text" id="ejs-tmpl" placeholder="template_xxxxx">
+            </div>
+          </div>
+          <button class="btn btn-gold btn-sm" onclick="saveEmailJsConfig()">Save Config</button>
+          <button class="btn btn-ghost btn-sm" onclick="sendTestAlert()" style="margin-left:6px;">Send Test</button>
+        </div>
+      </div>
+
+      <div class="settings-card">
+        <h3>Categories</h3>
+        <p class="hint">Custom item categories. Default set covers typical squadron supplies.</p>
+        <div id="cat-list" style="margin-bottom:10px;"></div>
+        <div style="display:flex;gap:8px;">
+          <input type="text" id="new-cat" placeholder="New category"
+                 style="flex:1;padding:9px 12px;background:var(--navy);border:1px solid rgba(255,255,255,0.12);border-radius:6px;color:var(--white);">
+          <button class="btn btn-gold btn-sm" onclick="addCategory()">Add</button>
+        </div>
+      </div>
+
+      <div class="settings-card">
+        <h3>Data Management</h3>
+        <p class="hint">Export a local backup, or reset all inventory to defaults.</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn btn-ghost btn-sm" onclick="exportJSON()">⬇ Export JSON</button>
+          <label class="btn btn-ghost btn-sm" style="cursor:pointer;">
+            ⬆ Import JSON
+            <input type="file" accept="application/json" onchange="importJSON(event)" style="display:none;">
+          </label>
+          <button class="btn btn-danger btn-sm" onclick="confirmReset()">Reset Inventory</button>
+        </div>
+      </div>
+
+      <div class="settings-card">
+        <h3>About</h3>
+        <p class="hint" style="margin:0;">
+          <strong style="color:var(--cap-gold)">Springfield Civil Air Patrol Squadron</strong><br>
+          Inventory Management System v1.0<br>
+          Deployed on Vercel · Data stored in Vercel KV<br>
+          <em style="color:var(--gray);">Semper Vigilans — Always Vigilant</em>
+        </p>
+      </div>
+
+    </div>
+  </section>
+
+</main>
+
+<!-- ═══════════════════════ FAB ═══════════════════════ -->
+<button class="fab" onclick="openAddModal()" aria-label="Add item">+</button>
+
+<!-- ═══════════════════════ MODAL ═══════════════════════ -->
+<div class="modal-backdrop" id="modal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="modal-title">Add Item</h3>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="field">
+        <label>Item Name</label>
+        <input type="text" id="f-name" placeholder="e.g., Achievement Ribbon">
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Category</label>
+          <select id="f-category"></select>
+        </div>
+        <div class="field">
+          <label>Unit</label>
+          <input type="text" id="f-unit" placeholder="each" value="each">
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>On Hand</label>
+          <input type="number" id="f-qty" min="0" value="0">
+        </div>
+        <div class="field">
+          <label>Reorder At</label>
+          <input type="number" id="f-reorder" min="0" value="5">
+        </div>
+        <div class="field">
+          <label>Unit Cost ($)</label>
+          <input type="number" id="f-cost" min="0" step="0.01" value="0">
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Vendor</label>
+          <input type="text" id="f-vendor" placeholder="Vanguard Industries">
+        </div>
+        <div class="field">
+          <label>Vendor Website</label>
+          <input type="url" id="f-vendor-url" placeholder="https://…">
+        </div>
+      </div>
+      <div class="field">
+        <label>Storage Location</label>
+        <input type="text" id="f-location" placeholder="e.g., Supply Cabinet A">
+      </div>
+      <div class="field">
+        <label>Notes</label>
+        <textarea id="f-notes" rows="2" placeholder="Optional"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-danger" id="delete-btn" onclick="deleteItem()" style="display:none;">Delete</button>
+      <button class="btn btn-gold" onclick="saveItemForm()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════ TOAST ═══════════════════════ -->
+<div class="toast" id="toast"></div>
+
+<!-- ═══════════════════════ PRINT VIEW ═══════════════════════ -->
+<div class="print-root" id="print-root"></div>
+
+<script>
+/* ══════════════════════════════════════════════════════════════
+   BLOOMINGTON CAP — INVENTORY APP
+   Data layer: Vercel KV via /api/items (same-domain fetch)
+   Data isolated to Springfield squadron via server-side namespace
+   ══════════════════════════════════════════════════════════════ */
+
+const SQUADRON_NAME = 'Springfield Civil Air Patrol';
+const SQUADRON_SHORT = 'Springfield CAP';
+const API_BASE = '/api/items';
+
+const DEFAULT_CATEGORIES = ['Ribbons','Ribbon Racks','Insignia','Uniforms','Supplies','Cadet Materials','Other'];
+
+const DEFAULT_ITEMS = [
+  { id: uid(), name: 'Achievement Ribbon',            category: 'Ribbons',         qty: 12, reorderAt: 5, unit: 'each', cost: 1.50, vendor: 'Vanguard Industries', vendorUrl: 'https://www.vanguardmil.com', location: 'Supply Cabinet A', notes: '', updated: today() },
+  { id: uid(), name: 'Aerospace Education Ribbon',    category: 'Ribbons',         qty: 8,  reorderAt: 5, unit: 'each', cost: 1.50, vendor: 'Vanguard Industries', vendorUrl: 'https://www.vanguardmil.com', location: 'Supply Cabinet A', notes: '', updated: today() },
+  { id: uid(), name: 'Leadership Ribbon',             category: 'Ribbons',         qty: 3,  reorderAt: 5, unit: 'each', cost: 1.50, vendor: 'Vanguard Industries', vendorUrl: 'https://www.vanguardmil.com', location: 'Supply Cabinet A', notes: '', updated: today() },
+  { id: uid(), name: '2-Ribbon Rack',                 category: 'Ribbon Racks',    qty: 6,  reorderAt: 4, unit: 'each', cost: 3.25, vendor: 'Vanguard Industries', vendorUrl: 'https://www.vanguardmil.com', location: 'Supply Cabinet B', notes: '', updated: today() },
+  { id: uid(), name: '4-Ribbon Rack',                 category: 'Ribbon Racks',    qty: 4,  reorderAt: 3, unit: 'each', cost: 4.50, vendor: 'Vanguard Industries', vendorUrl: 'https://www.vanguardmil.com', location: 'Supply Cabinet B', notes: '', updated: today() },
+  { id: uid(), name: 'CAP Cutout — Senior',           category: 'Insignia',        qty: 10, reorderAt: 4, unit: 'pair', cost: 2.75, vendor: 'Vanguard Industries', vendorUrl: 'https://www.vanguardmil.com', location: 'Supply Cabinet A', notes: '', updated: today() },
+  { id: uid(), name: 'Name Plate (blue)',             category: 'Uniforms',        qty: 2,  reorderAt: 4, unit: 'each', cost: 6.00, vendor: 'Vanguard Industries', vendorUrl: 'https://www.vanguardmil.com', location: 'Supply Cabinet B', notes: '', updated: today() },
+  { id: uid(), name: 'CAP Form 2AF',                  category: 'Supplies',        qty: 1,  reorderAt: 10, unit: 'sheets', cost: 0, vendor: 'NHQ Supply',        vendorUrl: 'https://www.capmembers.com',   location: 'File Cabinet',     notes: 'Print from NHQ', updated: today() },
+];
+
+function uid()    { return Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
+function today()  { return new Date().toLocaleDateString('en-US', {year:'numeric',month:'short',day:'numeric'}); }
+function money(n) { return '$' + (Number(n)||0).toFixed(2); }
+
+// ─── LOCAL CACHE ────────────────────────────────────────────────
+function loadCached() {
+  try { return JSON.parse(localStorage.getItem('cap_springfield_items')) || null; }
+  catch { return null; }
+}
+function saveCached(arr) {
+  try { localStorage.setItem('cap_springfield_items', JSON.stringify(arr)); } catch {}
+}
+function loadSettings() {
+  try {
+    return JSON.parse(localStorage.getItem('cap_springfield_settings')) || {
+      emails: [], ejsPubKey: '', ejsService: '', ejsTemplate: '',
+      categories: [...DEFAULT_CATEGORIES]
+    };
+  } catch {
+    return { emails: [], ejsPubKey: '', ejsService: '', ejsTemplate: '', categories: [...DEFAULT_CATEGORIES] };
+  }
+}
+function saveSettingsLocal(s) {
+  try { localStorage.setItem('cap_springfield_settings', JSON.stringify(s)); } catch {}
+}
+
+let items = loadCached() || [];
+let settings = loadSettings();
+let editingId = null;
+let syncStatus = 'idle';
+let sortKey = 'name';
+let sortDir = 1;
+
+// ─── API LAYER ──────────────────────────────────────────────────
+async function apiGet(action = 'getItems') {
+  const res = await fetch(`${API_BASE}?action=${action}&cb=${Date.now()}`);
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  return res.json();
+}
+async function apiPost(body) {
+  const res = await fetch(API_BASE, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  return res.json();
+}
+
+function setSyncStatus(status, msg) {
+  syncStatus = status;
+  const el = document.getElementById('sync-indicator');
+  if (!el) return;
+  const map = {
+    idle:    { icon: '○', color: 'var(--gray)',    text: 'Local only' },
+    syncing: { icon: '↻', color: 'var(--cap-gold)', text: msg || 'Syncing…' },
+    ok:      { icon: '●', color: 'var(--ok)',      text: msg || 'Live' },
+    error:   { icon: '●', color: 'var(--danger)',  text: msg || 'Offline' },
+  };
+  const s = map[status] || map.idle;
+  el.innerHTML = `<span style="color:${s.color};font-size:0.72rem;display:flex;align-items:center;gap:5px;font-weight:600;">
+    <span style="font-size:0.85rem;">${s.icon}</span>${s.text}</span>`;
+}
+
+async function syncFromServer(silent) {
+  setSyncStatus('syncing', 'Loading…');
+  try {
+    const data = await apiGet('getItems');
+    if (data.ok && Array.isArray(data.items)) {
+      if (data.items.length === 0 && items.length === 0) {
+        // First load ever — seed with defaults
+        items = [...DEFAULT_ITEMS];
+        await pushAllToServer();
+      } else {
+        items = data.items;
+      }
+      saveCached(items);
+      renderAll();
+      setSyncStatus('ok');
+      if (!silent) toast('Inventory loaded from cloud', 'ok');
+    }
+  } catch (err) {
+    setSyncStatus('error', 'Offline');
+    if (!silent) toast('Could not reach server — using local cache', 'warn');
+  }
+}
+
+async function pushAllToServer() {
+  setSyncStatus('syncing', 'Saving…');
+  try {
+    await apiPost({ action: 'saveItems', items });
+    saveCached(items);
+    setSyncStatus('ok');
+    return true;
+  } catch (err) {
+    setSyncStatus('error', 'Save failed');
+    toast('Could not save to cloud: ' + err.message, 'error');
+    return false;
+  }
+}
+
+async function pushItem(item) {
+  setSyncStatus('syncing', 'Saving…');
+  try {
+    await apiPost({ action: 'saveItem', item });
+    saveCached(items);
+    setSyncStatus('ok');
+    return true;
+  } catch (err) {
+    setSyncStatus('error', 'Save failed');
+    toast('Could not save: ' + err.message, 'error');
+    return false;
+  }
+}
+
+async function deleteItemServer(id) {
+  setSyncStatus('syncing', 'Deleting…');
+  try {
+    await apiPost({ action: 'deleteItem', id });
+    saveCached(items);
+    setSyncStatus('ok');
+    return true;
+  } catch (err) {
+    setSyncStatus('error', 'Delete failed');
+    toast('Could not delete: ' + err.message, 'error');
+    return false;
+  }
+}
+
+// ─── STATUS HELPER ──────────────────────────────────────────────
+function statusOf(item) {
+  if (item.qty <= 0) return 'out';
+  if (item.qty <= (item.reorderAt || 0)) return 'low';
+  return 'ok';
+}
+function statusLabel(s) {
+  return s === 'out' ? 'Out of Stock' : s === 'low' ? 'Low Stock' : 'In Stock';
+}
+
+// ─── RENDERING ──────────────────────────────────────────────────
+function renderAll() {
+  renderStats();
+  renderDashboard();
+  renderInventory();
+  renderReport();
+  renderSettings();
+  populateCategoryDropdowns();
+}
+
+function renderStats() {
+  const total = items.length;
+  const low   = items.filter(i => statusOf(i) === 'low').length;
+  const out   = items.filter(i => statusOf(i) === 'out').length;
+  const ok    = items.filter(i => statusOf(i) === 'ok').length;
+  const value = items.reduce((s,i) => s + (Number(i.qty)||0) * (Number(i.cost)||0), 0);
+  document.getElementById('stats').innerHTML = `
+    <div class="stat-card"><div class="stat-label">Total Items</div><div class="stat-value">${total}</div></div>
+    <div class="stat-card ok"><div class="stat-label">In Stock</div><div class="stat-value ok">${ok}</div></div>
+    <div class="stat-card warn"><div class="stat-label">Low Stock</div><div class="stat-value warn">${low}</div></div>
+    <div class="stat-card danger"><div class="stat-label">Out of Stock</div><div class="stat-value danger">${out}</div></div>
+    <div class="stat-card"><div class="stat-label">Total Value</div><div class="stat-value">${money(value)}</div></div>
+  `;
+}
+
+function renderDashboard() {
+  const body = document.getElementById('dash-body');
+  if (!body) return;
+  if (items.length === 0) {
+    body.innerHTML = '<tr><td colspan="3" style="text-align:center;padding:30px;color:var(--gray);">No inventory yet. Add items from the Inventory tab.</td></tr>';
+    return;
+  }
+  body.innerHTML = items
+    .slice()
+    .sort((a,b) => {
+      // Out/low first
+      const sa = statusOf(a), sb = statusOf(b);
+      const rank = { out: 0, low: 1, ok: 2 };
+      if (rank[sa] !== rank[sb]) return rank[sa] - rank[sb];
+      return a.name.localeCompare(b.name);
+    })
+    .map(i => {
+      const st = statusOf(i);
+      return `<tr>
+        <td class="name-col">${escape(i.name)}</td>
+        <td style="text-align:right;font-family:'Oswald',sans-serif;font-size:1rem;">${i.qty}</td>
+        <td style="text-align:center;"><span class="status-badge status-${st}">${statusLabel(st)}</span></td>
+      </tr>`;
+    }).join('');
+}
+
+function renderInventory() {
+  const q = (document.getElementById('search')?.value || '').toLowerCase().trim();
+  const catF = document.getElementById('filter-cat')?.value || 'all';
+  const stF = document.getElementById('filter-status')?.value || 'all';
+  const grid = document.getElementById('items-grid');
+  if (!grid) return;
+
+  const filtered = items.filter(i => {
+    if (catF !== 'all' && i.category !== catF) return false;
+    if (stF !== 'all' && statusOf(i) !== stF) return false;
+    if (q && !(i.name + ' ' + (i.vendor||'') + ' ' + (i.location||'') + ' ' + (i.notes||'')).toLowerCase().includes(q)) return false;
+    return true;
+  });
+
+  if (filtered.length === 0) {
+    grid.innerHTML = '<div style="grid-column:1/-1;padding:40px;text-align:center;color:var(--gray);">No items match your filters.</div>';
+    return;
+  }
+
+  grid.innerHTML = filtered.map(i => {
+    const st = statusOf(i);
+    return `<div class="item-card ${st}">
+      <div class="item-head">
+        <div>
+          <div class="item-name">${escape(i.name)}</div>
+          <div class="item-meta">${escape(i.category||'—')} · Reorder at ${i.reorderAt||0}</div>
+        </div>
+        <span class="status-badge status-${st}">${statusLabel(st)}</span>
+      </div>
+      <div class="item-body">
+        <div style="font-size:0.82rem;color:var(--gray-light);">
+          <strong style="color:var(--cap-gold);">${i.qty}</strong> ${escape(i.unit||'each')} on hand
+          ${i.cost ? `· ${money(i.cost)}/${escape(i.unit||'each')} · <strong style="color:var(--cap-gold);">${money(i.qty*i.cost)}</strong> value` : ''}
+        </div>
+        <div class="qty-block">
+          <button class="qty-btn" onclick="adjustQty('${i.id}', -1)">−</button>
+          <span class="qty-value">${i.qty}</span>
+          <button class="qty-btn" onclick="adjustQty('${i.id}', 1)">+</button>
+        </div>
+      </div>
+      ${(i.vendor || i.location || i.notes) ? `
+      <div class="item-detail">
+        ${i.vendor ? `<strong>Vendor:</strong> ${i.vendorUrl ? `<a href="${escape(i.vendorUrl)}" target="_blank" rel="noopener">${escape(i.vendor)}</a>` : escape(i.vendor)} · ` : ''}
+        ${i.location ? `<strong>Location:</strong> ${escape(i.location)}` : ''}
+        ${i.notes ? `<br><em style="color:var(--gray);">${escape(i.notes)}</em>` : ''}
+      </div>` : ''}
+      <div class="item-actions">
+        <button class="btn btn-ghost btn-sm" onclick="openEditModal('${i.id}')">✎ Edit</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderReport() {
+  const body = document.getElementById('report-body');
+  if (!body) return;
+  const catF = document.getElementById('rep-cat')?.value || 'all';
+  const stF = document.getElementById('rep-status')?.value || 'all';
+
+  let filtered = items.filter(i => {
+    if (catF !== 'all' && i.category !== catF) return false;
+    if (stF !== 'all' && statusOf(i) !== stF) return false;
+    return true;
+  });
+
+  filtered.sort((a, b) => {
+    let va, vb;
+    if (sortKey === 'total') { va = (a.qty||0)*(a.cost||0); vb = (b.qty||0)*(b.cost||0); }
+    else if (sortKey === 'status') { va = statusOf(a); vb = statusOf(b); }
+    else { va = a[sortKey]; vb = b[sortKey]; }
+    if (va == null) va = '';
+    if (vb == null) vb = '';
+    if (typeof va === 'number' && typeof vb === 'number') return (va - vb) * sortDir;
+    return String(va).localeCompare(String(vb)) * sortDir;
+  });
+
+  // Update arrows
+  document.querySelectorAll('#report-table thead th').forEach(th => {
+    th.classList.remove('sorted');
+    const arrow = th.querySelector('.sort-arrow');
+    if (arrow) arrow.textContent = '⇅';
+    if (th.dataset.sort === sortKey) {
+      th.classList.add('sorted');
+      if (arrow) arrow.textContent = sortDir > 0 ? '▲' : '▼';
+    }
+  });
+
+  if (filtered.length === 0) {
+    body.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--gray);">No items match filters.</td></tr>';
+    return;
+  }
+
+  body.innerHTML = filtered.map(i => {
+    const st = statusOf(i);
+    const total = (i.qty||0) * (i.cost||0);
+    return `<tr>
+      <td class="name-col">${escape(i.name)}</td>
+      <td>${escape(i.category||'')}</td>
+      <td style="text-align:right;font-family:'Oswald',sans-serif;">${i.qty||0}</td>
+      <td style="text-align:right;">${i.reorderAt||0}</td>
+      <td style="text-align:right;">${money(i.cost)}</td>
+      <td style="text-align:right;">${money(total)}</td>
+      <td>${escape(i.vendor||'')}</td>
+      <td>${escape(i.location||'')}</td>
+      <td style="text-align:center;"><span class="status-badge status-${st}">${statusLabel(st)}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+function renderSettings() {
+  // Email list
+  const el = document.getElementById('email-list');
+  if (el) {
+    if (!settings.emails.length) {
+      el.innerHTML = '<div style="color:var(--gray);font-size:0.85rem;padding:8px 0;">No recipients configured.</div>';
+    } else {
+      el.innerHTML = settings.emails.map((e, idx) => `
+        <div class="email-row">
+          <span>${escape(e)}</span>
+          <button class="btn btn-ghost btn-sm" onclick="removeEmail(${idx})">Remove</button>
+        </div>
+      `).join('');
+    }
+  }
+  // EmailJS config
+  const pk = document.getElementById('ejs-pub');
+  const sv = document.getElementById('ejs-svc');
+  const tm = document.getElementById('ejs-tmpl');
+  if (pk) pk.value = settings.ejsPubKey || '';
+  if (sv) sv.value = settings.ejsService || '';
+  if (tm) tm.value = settings.ejsTemplate || '';
+  // Category list
+  const cl = document.getElementById('cat-list');
+  if (cl) {
+    cl.innerHTML = settings.categories.map((c, idx) => `
+      <div class="email-row">
+        <span>${escape(c)}</span>
+        <button class="btn btn-ghost btn-sm" onclick="removeCategory(${idx})">Remove</button>
+      </div>
+    `).join('');
+  }
+}
+
+function populateCategoryDropdowns() {
+  const opts = settings.categories.map(c => `<option value="${escape(c)}">${escape(c)}</option>`).join('');
+  const allOpt = '<option value="all">All Categories</option>';
+  ['filter-cat','rep-cat'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      const cur = el.value;
+      el.innerHTML = allOpt + opts;
+      el.value = cur || 'all';
+    }
+  });
+  const fc = document.getElementById('f-category');
+  if (fc) fc.innerHTML = opts;
+}
+
+// ─── CRUD ───────────────────────────────────────────────────────
+async function adjustQty(id, delta) {
+  const i = items.find(x => x.id === id);
+  if (!i) return;
+  i.qty = Math.max(0, (Number(i.qty)||0) + delta);
+  i.updated = today();
+  saveCached(items);
+  renderAll();
+  await pushItem(i);
+  checkLowStockAlert(i);
+}
+
+function openAddModal() {
+  editingId = null;
+  document.getElementById('modal-title').textContent = 'Add Item';
+  document.getElementById('delete-btn').style.display = 'none';
+  ['f-name','f-vendor','f-vendor-url','f-location','f-notes'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('f-unit').value = 'each';
+  document.getElementById('f-qty').value = 0;
+  document.getElementById('f-reorder').value = 5;
+  document.getElementById('f-cost').value = 0;
+  document.getElementById('f-category').value = settings.categories[0] || 'Other';
+  document.getElementById('modal').classList.add('open');
+}
+
+function openEditModal(id) {
+  const i = items.find(x => x.id === id);
+  if (!i) return;
+  editingId = id;
+  document.getElementById('modal-title').textContent = 'Edit Item';
+  document.getElementById('delete-btn').style.display = 'inline-flex';
+  document.getElementById('f-name').value       = i.name || '';
+  document.getElementById('f-category').value   = i.category || settings.categories[0];
+  document.getElementById('f-unit').value       = i.unit || 'each';
+  document.getElementById('f-qty').value        = i.qty || 0;
+  document.getElementById('f-reorder').value    = i.reorderAt || 0;
+  document.getElementById('f-cost').value       = i.cost || 0;
+  document.getElementById('f-vendor').value     = i.vendor || '';
+  document.getElementById('f-vendor-url').value = i.vendorUrl || '';
+  document.getElementById('f-location').value   = i.location || '';
+  document.getElementById('f-notes').value      = i.notes || '';
+  document.getElementById('modal').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('modal').classList.remove('open');
+  editingId = null;
+}
+
+async function saveItemForm() {
+  const name = document.getElementById('f-name').value.trim();
+  if (!name) { toast('Item name is required', 'error'); return; }
+  const data = {
+    name,
+    category: document.getElementById('f-category').value,
+    unit:     document.getElementById('f-unit').value.trim() || 'each',
+    qty:      Number(document.getElementById('f-qty').value) || 0,
+    reorderAt:Number(document.getElementById('f-reorder').value) || 0,
+    cost:     Number(document.getElementById('f-cost').value) || 0,
+    vendor:   document.getElementById('f-vendor').value.trim(),
+    vendorUrl:document.getElementById('f-vendor-url').value.trim(),
+    location: document.getElementById('f-location').value.trim(),
+    notes:    document.getElementById('f-notes').value.trim(),
+    updated:  today(),
+  };
+  if (editingId) {
+    const idx = items.findIndex(x => x.id === editingId);
+    if (idx >= 0) items[idx] = { ...items[idx], ...data };
+  } else {
+    data.id = uid();
+    items.push(data);
+  }
+  saveCached(items);
+  renderAll();
+  closeModal();
+  const target = items.find(x => x.id === (editingId || data.id));
+  if (target) {
+    await pushItem(target);
+    toast(editingId ? 'Item updated' : 'Item added', 'ok');
+    if (!editingId) checkLowStockAlert(target);
+  }
+}
+
+async function deleteItem() {
+  if (!editingId) return;
+  if (!confirm('Delete this item permanently?')) return;
+  items = items.filter(x => x.id !== editingId);
+  saveCached(items);
+  renderAll();
+  const id = editingId;
+  closeModal();
+  await deleteItemServer(id);
+  toast('Item deleted', 'ok');
+}
+
+// ─── EMAIL / SETTINGS ───────────────────────────────────────────
+function addEmail() {
+  const val = document.getElementById('new-email').value.trim();
+  if (!val || !val.includes('@')) { toast('Enter a valid email', 'error'); return; }
+  if (settings.emails.includes(val)) { toast('Already added', 'warn'); return; }
+  settings.emails.push(val);
+  saveSettingsLocal(settings);
+  document.getElementById('new-email').value = '';
+  renderSettings();
+  toast('Email added', 'ok');
+}
+function removeEmail(idx) {
+  settings.emails.splice(idx, 1);
+  saveSettingsLocal(settings);
+  renderSettings();
+}
+function saveEmailJsConfig() {
+  settings.ejsPubKey   = document.getElementById('ejs-pub').value.trim();
+  settings.ejsService  = document.getElementById('ejs-svc').value.trim();
+  settings.ejsTemplate = document.getElementById('ejs-tmpl').value.trim();
+  saveSettingsLocal(settings);
+  toast('EmailJS config saved', 'ok');
+}
+function addCategory() {
+  const val = document.getElementById('new-cat').value.trim();
+  if (!val) return;
+  if (settings.categories.includes(val)) { toast('Already exists', 'warn'); return; }
+  settings.categories.push(val);
+  saveSettingsLocal(settings);
+  document.getElementById('new-cat').value = '';
+  populateCategoryDropdowns();
+  renderSettings();
+}
+function removeCategory(idx) {
+  if (items.some(i => i.category === settings.categories[idx])) {
+    if (!confirm('Some items use this category. Remove anyway?')) return;
+  }
+  settings.categories.splice(idx, 1);
+  saveSettingsLocal(settings);
+  populateCategoryDropdowns();
+  renderSettings();
+}
+
+// ─── LOW STOCK EMAIL ────────────────────────────────────────────
+async function checkLowStockAlert(item) {
+  if (!item || statusOf(item) === 'ok') return;
+  if (!settings.ejsPubKey || !settings.ejsService || !settings.ejsTemplate || !settings.emails.length) return;
+  try {
+    if (!window._ejsInit) {
+      emailjs.init({ publicKey: settings.ejsPubKey });
+      window._ejsInit = true;
+    }
+    for (const to of settings.emails) {
+      await emailjs.send(settings.ejsService, settings.ejsTemplate, {
+        to_email: to,
+        squadron: SQUADRON_NAME,
+        item_name: item.name,
+        item_qty: item.qty,
+        reorder_at: item.reorderAt,
+        status: statusLabel(statusOf(item)),
+        vendor: item.vendor || 'Not specified',
+        vendor_url: item.vendorUrl || ''
+      });
+    }
+  } catch (e) {
+    console.warn('Email send failed:', e);
+  }
+}
+
+async function sendTestAlert() {
+  if (!settings.ejsPubKey || !settings.ejsService || !settings.ejsTemplate) {
+    toast('Save EmailJS config first', 'error'); return;
+  }
+  if (!settings.emails.length) { toast('Add at least one email first', 'error'); return; }
+  try {
+    emailjs.init({ publicKey: settings.ejsPubKey });
+    for (const to of settings.emails) {
+      await emailjs.send(settings.ejsService, settings.ejsTemplate, {
+        to_email: to, squadron: SQUADRON_NAME,
+        item_name: 'Test Item', item_qty: 0, reorder_at: 5,
+        status: 'Out of Stock', vendor: 'Test Vendor', vendor_url: ''
+      });
+    }
+    toast('Test emails sent', 'ok');
+  } catch (e) {
+    toast('Email failed: ' + e.message, 'error');
+  }
+}
+
+// ─── EXPORT ─────────────────────────────────────────────────────
+function exportCSV() {
+  const headers = ['Name','Category','On Hand','Reorder At','Unit','Unit Cost','Total Value','Vendor','Vendor URL','Location','Notes','Status','Updated'];
+  const rows = items.map(i => [
+    i.name, i.category, i.qty, i.reorderAt, i.unit,
+    (Number(i.cost)||0).toFixed(2),
+    ((Number(i.qty)||0)*(Number(i.cost)||0)).toFixed(2),
+    i.vendor, i.vendorUrl, i.location, i.notes,
+    statusLabel(statusOf(i)), i.updated
+  ]);
+  const csv = [headers, ...rows].map(r =>
+    r.map(c => `"${String(c ?? '').replace(/"/g,'""')}"`).join(',')
+  ).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `springfield-cap-inventory-${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('CSV exported', 'ok');
+}
+
+function exportPDF() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'letter' });
+  const PW = doc.internal.pageSize.getWidth();
+  const PH = doc.internal.pageSize.getHeight();
+  const BLUE = [0, 20, 137];
+  const GOLD = [255, 205, 0];
+  const RED  = [186, 12, 47];
+  const GRAY = [110, 110, 110];
+  const LIGHT = [230, 230, 230];
+  const STRIPE = [245, 245, 245];
+
+  const catF = document.getElementById('rep-cat')?.value || 'all';
+  const stF = document.getElementById('rep-status')?.value || 'all';
+  let filtered = items.filter(i => {
+    if (catF !== 'all' && i.category !== catF) return false;
+    if (stF !== 'all' && statusOf(i) !== stF) return false;
+    return true;
+  });
+
+  const genDate = new Date().toLocaleString('en-US');
+  const head = [['Item','Category','Qty','Reorder','Unit $','Total $','Vendor','Location','Status']];
+  const body = filtered.map(i => [
+    i.name, i.category || '', i.qty || 0, i.reorderAt || 0,
+    money(i.cost), money((i.qty||0)*(i.cost||0)),
+    i.vendor || '', i.location || '', statusLabel(statusOf(i))
+  ]);
+
+  doc.autoTable({
+    head, body,
+    startY: 90,
+    margin: { left: 20, right: 20, top: 90, bottom: 30 },
+    styles: { font: 'helvetica', fontSize: 8, cellPadding: 4, textColor: [30,30,30], lineColor: LIGHT, lineWidth: 0.3 },
+    headStyles: { fillColor: BLUE, textColor: GOLD, fontStyle: 'bold', fontSize: 8.5 },
+    alternateRowStyles: { fillColor: STRIPE },
+    columnStyles: {
+      2: { halign: 'right' },
+      3: { halign: 'right' },
+      4: { halign: 'right' },
+      5: { halign: 'right' }
+    },
+    didDrawPage: (data) => {
+      // Header
+      doc.setFillColor(...BLUE);
+      doc.rect(0, 0, PW, 55, 'F');
+      doc.setFillColor(...GOLD);
+      doc.rect(0, 55, PW, 3, 'F');
+      doc.setTextColor(255,255,255);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(18);
+      doc.text('BLOOMINGTON CIVIL AIR PATROL', 20, 28);
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(...GOLD);
+      doc.text('INVENTORY REPORT', 20, 44);
+      // Subhead
+      doc.setFontSize(8);
+      doc.setTextColor(...GRAY);
+      const catLabel = catF === 'all' ? 'All Categories' : catF;
+      const stLabel  = stF  === 'all' ? 'All Status'     : statusLabel(stF);
+      doc.text(`Filter: ${catLabel} · ${stLabel}`, 20, 72);
+      doc.text(`Generated: ${genDate}`, PW - 20, 72, { align: 'right' });
+      // Footer bar
+      doc.setFillColor(...GOLD);
+      doc.rect(0, PH - 5, PW, 5, 'F');
+      doc.setFillColor(...STRIPE);
+      doc.rect(0, PH - 20, PW, 15, 'F');
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7);
+      doc.setTextColor(...GRAY);
+      doc.text('Springfield Civil Air Patrol · Inventory Management System', 20, PH - 10);
+      const pg = doc.internal.getCurrentPageInfo().pageNumber;
+      doc.text(`Page ${pg}`, PW - 20, PH - 10, { align: 'right' });
+    }
+  });
+  doc.save(`springfield-cap-inventory-${new Date().toISOString().slice(0,10)}.pdf`);
+  toast('PDF exported', 'ok');
+}
+
+// ─── PRINT VIEW ─────────────────────────────────────────────────
+function buildPrintView() {
+  const catF = document.getElementById('rep-cat')?.value || 'all';
+  const stF = document.getElementById('rep-status')?.value || 'all';
+  let filtered = items.filter(i => {
+    if (catF !== 'all' && i.category !== catF) return false;
+    if (stF !== 'all' && statusOf(i) !== stF) return false;
+    return true;
+  });
+  filtered.sort((a,b) => String(a.name).localeCompare(String(b.name)));
+
+  const root = document.getElementById('print-root');
+  const genDate = new Date().toLocaleString('en-US');
+  const catLabel = catF === 'all' ? 'All Categories' : catF;
+  const stLabel  = stF  === 'all' ? 'All Status'     : statusLabel(stF);
+
+  root.innerHTML = `
+    <div class="print-header">
+      <h1>BLOOMINGTON CIVIL AIR PATROL</h1>
+      <p>Inventory Report · ${catLabel} · ${stLabel} · Generated ${genDate}</p>
+    </div>
+    <table class="print-table">
+      <thead>
+        <tr>
+          <th>Item</th>
+          <th>Category</th>
+          <th style="text-align:right;">Qty</th>
+          <th style="text-align:right;">Reorder</th>
+          <th style="text-align:right;">Unit $</th>
+          <th style="text-align:right;">Total $</th>
+          <th>Vendor</th>
+          <th>Location</th>
+          <th style="text-align:center;">Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${filtered.map(i => {
+          const st = statusOf(i);
+          return `<tr>
+            <td>${escape(i.name)}</td>
+            <td>${escape(i.category||'')}</td>
+            <td style="text-align:right;">${i.qty||0}</td>
+            <td style="text-align:right;">${i.reorderAt||0}</td>
+            <td style="text-align:right;">${money(i.cost)}</td>
+            <td style="text-align:right;">${money((i.qty||0)*(i.cost||0))}</td>
+            <td>${escape(i.vendor||'')}</td>
+            <td>${escape(i.location||'')}</td>
+            <td style="text-align:center;"><span class="print-status ${st}">${statusLabel(st)}</span></td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>
+    <div class="print-footer">
+      <span>Springfield Civil Air Patrol · Inventory Management System</span>
+      <span>${filtered.length} items</span>
+    </div>
+  `;
+}
+window.addEventListener('beforeprint', buildPrintView);
+
+// ─── JSON IMPORT / EXPORT ───────────────────────────────────────
+function exportJSON() {
+  const data = { exported: new Date().toISOString(), squadron: SQUADRON_NAME, items, settings };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `springfield-cap-backup-${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('Backup exported', 'ok');
+}
+function importJSON(ev) {
+  const file = ev.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (Array.isArray(data.items)) items = data.items;
+      if (data.settings) { settings = { ...settings, ...data.settings }; saveSettingsLocal(settings); }
+      saveCached(items);
+      await pushAllToServer();
+      renderAll();
+      toast('Data imported', 'ok');
+    } catch (err) {
+      toast('Invalid JSON file', 'error');
+    }
+  };
+  reader.readAsText(file);
+  ev.target.value = '';
+}
+function confirmReset() {
+  if (!confirm('Reset ALL inventory? This cannot be undone.')) return;
+  if (!confirm('Are you absolutely sure? All items will be removed from the cloud.')) return;
+  items = [];
+  saveCached(items);
+  renderAll();
+  apiPost({ action: 'reset' }).then(() => toast('Inventory cleared', 'ok'));
+}
+
+// ─── CONNECTION TEST ────────────────────────────────────────────
+async function testConnection() {
+  const el = document.getElementById('connection-status');
+  el.innerHTML = '<span style="color:var(--cap-gold);">Testing…</span>';
+  try {
+    const data = await apiGet('ping');
+    if (data.ok) {
+      el.innerHTML = `<span style="color:var(--ok);">✓ Connected — ${data.squadron || 'springfield'} API responding</span>`;
+    } else {
+      el.innerHTML = '<span style="color:var(--danger);">✗ Unexpected response</span>';
+    }
+  } catch (err) {
+    el.innerHTML = `<span style="color:var(--danger);">✗ Connection failed: ${err.message}</span>`;
+  }
+}
+
+// ─── TOAST ──────────────────────────────────────────────────────
+let toastTimer;
+function toast(msg, kind = 'ok') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast show ' + kind;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2600);
+}
+
+// ─── UTIL ───────────────────────────────────────────────────────
+function escape(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+// ─── NAV ────────────────────────────────────────────────────────
+document.querySelectorAll('.nav-tab').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('page-' + btn.dataset.page).classList.add('active');
+  });
+});
+
+// Sort clicks
+document.querySelectorAll('#report-table thead th').forEach(th => {
+  th.addEventListener('click', () => {
+    const k = th.dataset.sort;
+    if (!k) return;
+    if (sortKey === k) sortDir = -sortDir;
+    else { sortKey = k; sortDir = 1; }
+    renderReport();
+  });
+});
+
+// Close modal on backdrop click
+document.getElementById('modal').addEventListener('click', (e) => {
+  if (e.target.id === 'modal') closeModal();
+});
+
+// ─── INIT ───────────────────────────────────────────────────────
+(async function init() {
+  populateCategoryDropdowns();
+  renderAll();
+  await syncFromServer(true);
+  // Periodic refresh (every 60s) to pick up changes from other users
+  setInterval(() => syncFromServer(true), 60000);
+})();
+</script>
+
+</body>
+</html>
