@@ -1,12 +1,13 @@
 {
   "name": "cap-springfield-inventory",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Springfield Civil Air Patrol Squadron — Inventory Management System",
   "private": true,
+  "type": "module",
   "dependencies": {
     "@upstash/redis": "^1.34.3"
   },
   "engines": {
-    "node": ">=18"
+    "node": "22.x"
   }
 }
