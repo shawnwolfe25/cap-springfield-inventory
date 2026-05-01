@@ -716,7 +716,7 @@
       <circle cx="50" cy="50" r="10" fill="#BA0C2F"/>
     </svg>
     <div class="header-title">
-      <h1>BLOOMINGTON CAP</h1>
+      <h1>SPRINGFIELD CAP</h1>
       <p>Civil Air Patrol · Inventory</p>
     </div>
     <div id="sync-indicator"></div>
@@ -987,7 +987,7 @@
 
 <script>
 /* ══════════════════════════════════════════════════════════════
-   BLOOMINGTON CAP — INVENTORY APP
+   SPRINGFIELD CAP — INVENTORY APP
    Data layer: Vercel KV via /api/items (same-domain fetch)
    Data isolated to Springfield squadron via server-side namespace
    ══════════════════════════════════════════════════════════════ */
@@ -1614,7 +1614,7 @@ function exportPDF() {
       doc.setTextColor(255,255,255);
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(18);
-      doc.text('BLOOMINGTON CIVIL AIR PATROL', 20, 28);
+      doc.text('SPRINGFIELD CIVIL AIR PATROL', 20, 28);
       doc.setFontSize(10);
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(...GOLD);
@@ -1661,7 +1661,7 @@ function buildPrintView() {
 
   root.innerHTML = `
     <div class="print-header">
-      <h1>BLOOMINGTON CIVIL AIR PATROL</h1>
+      <h1>SPRINGFIELD CIVIL AIR PATROL</h1>
       <p>Inventory Report · ${catLabel} · ${stLabel} · Generated ${genDate}</p>
     </div>
     <table class="print-table">
