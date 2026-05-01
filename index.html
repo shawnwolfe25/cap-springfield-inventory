@@ -1901,11 +1901,15 @@ async function checkLowStockAlert(item) {
         reorder_at: item.reorderAt,
         status: statusLabel(statusOf(item)),
         vendor: item.vendor || 'Not specified',
-        vendor_url: item.vendorUrl || ''
+        vendor_url: item.vendorUrl || '',
+        items_list: `• ${item.name} (${item.category||'—'}) — ${item.qty} on hand, reorder at ${item.reorderAt||0} [${statusLabel(statusOf(item))}]`,
+        item_count: 1
       });
     }
   } catch (e) {
-    console.warn('Email send failed:', e);
+    const msg = (e && (e.text || e.message)) || (e && e.status ? `HTTP ${e.status}` : 'unknown error');
+    console.warn('Auto low-stock email failed:', e);
+    toast('Auto-alert failed: ' + msg, 'warn');
   }
 }
 
@@ -1915,17 +1919,24 @@ async function sendTestAlert() {
   }
   if (!settings.emails.length) { toast('Add at least one email first', 'error'); return; }
   try {
+    // Re-init each call so a freshly-pasted key takes effect immediately
     emailjs.init({ publicKey: settings.ejsPubKey });
+    window._ejsInit = true;
     for (const to of settings.emails) {
       await emailjs.send(settings.ejsService, settings.ejsTemplate, {
         to_email: to, squadron: SQUADRON_NAME,
         item_name: 'Test Item', item_qty: 0, reorder_at: 5,
-        status: 'Out of Stock', vendor: 'Test Vendor', vendor_url: ''
+        status: 'Out of Stock', vendor: 'Test Vendor', vendor_url: '',
+        items_list: '• Test Item — 0 on hand, reorder at 5 [Out of Stock]',
+        item_count: 1
       });
     }
     toast('Test emails sent', 'ok');
   } catch (e) {
-    toast('Email failed: ' + e.message, 'error');
+    // EmailJS errors look like { status: 400, text: "..." } — drill into them
+    const msg = (e && (e.text || e.message)) || (e && e.status ? `HTTP ${e.status}` : 'unknown error');
+    console.error('EmailJS test failed:', e);
+    toast('Email failed: ' + msg, 'error');
   }
 }
 
@@ -2303,7 +2314,9 @@ async function sendLowStockAlertNow() {
     }
     toast(`Alert sent to ${sentCount} recipient${sentCount===1?'':'s'}`, 'ok');
   } catch (e) {
-    toast('Email failed: ' + (e.text || e.message || 'unknown'), 'error');
+    const msg = (e && (e.text || e.message)) || (e && e.status ? `HTTP ${e.status}` : 'unknown error');
+    console.error('EmailJS send failed:', e);
+    toast('Email failed: ' + msg, 'error');
   }
 }
 
