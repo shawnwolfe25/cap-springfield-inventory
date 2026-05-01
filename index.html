@@ -701,9 +701,298 @@
     }
   }
   .print-root { display: none; }
+
+  /* ─── LOGIN SCREEN ─── */
+  .login-overlay {
+    position: fixed;
+    inset: 0;
+    background: linear-gradient(135deg, var(--navy) 0%, var(--navy-mid) 60%, var(--cap-blue) 100%);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .login-overlay.hidden { display: none; }
+  .login-box {
+    width: 100%;
+    max-width: 420px;
+    background: linear-gradient(135deg, var(--surface) 0%, var(--surface2) 100%);
+    border: 1px solid rgba(255,205,0,0.25);
+    border-radius: 14px;
+    padding: 32px 28px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    text-align: center;
+  }
+  .login-emblem {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 16px;
+    display: block;
+  }
+  .login-box h2 {
+    font-family: 'Oswald', sans-serif;
+    font-size: 1.4rem;
+    color: var(--white);
+    letter-spacing: 0.06em;
+    margin-bottom: 6px;
+  }
+  .login-box .login-sub {
+    font-size: 0.78rem;
+    color: var(--cap-gold);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    font-weight: 600;
+    margin-bottom: 24px;
+  }
+  .login-box .login-hint {
+    font-size: 0.85rem;
+    color: var(--gray-light);
+    margin-bottom: 18px;
+    line-height: 1.5;
+  }
+  .login-box input[type="password"] {
+    width: 100%;
+    padding: 12px 14px;
+    background: var(--navy);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 8px;
+    color: var(--white);
+    font-family: inherit;
+    font-size: 1rem;
+    margin-bottom: 12px;
+    text-align: center;
+    letter-spacing: 0.1em;
+  }
+  .login-box input[type="password"]:focus {
+    outline: none;
+    border-color: var(--cap-gold);
+  }
+  .login-box .login-error {
+    color: var(--red-bright);
+    font-size: 0.85rem;
+    margin-bottom: 12px;
+    min-height: 1.2em;
+  }
+  .login-box .login-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .login-box .btn { width: 100%; padding: 12px 20px; font-size: 0.9rem; }
+  .login-box .login-divider {
+    color: var(--gray);
+    font-size: 0.75rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin: 6px 0;
+    position: relative;
+  }
+  .login-box .login-divider::before,
+  .login-box .login-divider::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    width: 30%;
+    height: 1px;
+    background: rgba(255,255,255,0.1);
+  }
+  .login-box .login-divider::before { left: 0; }
+  .login-box .login-divider::after  { right: 0; }
+
+  /* ─── READ-ONLY BADGE ─── */
+  .readonly-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 9px;
+    background: rgba(186,12,47,0.15);
+    border: 1px solid var(--cap-red);
+    color: var(--red-bright);
+    border-radius: 12px;
+    font-size: 0.65rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-weight: 700;
+    margin-left: 6px;
+  }
+  /* Hide editing controls when in read-only mode */
+  body.readonly .qty-btn,
+  body.readonly .fab,
+  body.readonly .desktop-only,
+  body.readonly .ro-hide {
+    display: none !important;
+  }
+  body.readonly input:not([type="search"]):not(#search):not([readonly]),
+  body.readonly textarea,
+  body.readonly select:not(#filter-cat):not(#filter-status):not(#rep-cat):not(#rep-status):not(#inv-view-mode) {
+    pointer-events: none;
+    opacity: 0.55;
+  }
+
+  /* ─── INVENTORY: SINGLE-LINE ROW VIEW ─── */
+  .inv-toolbar-extra {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+    font-size: 0.78rem;
+    color: var(--gray-light);
+  }
+  .inv-toolbar-extra select {
+    padding: 6px 10px;
+    background: var(--surface);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 6px;
+    color: var(--white);
+    font-family: inherit;
+    font-size: 0.82rem;
+  }
+  .inv-rows {
+    background: var(--surface);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .inv-row {
+    display: grid;
+    grid-template-columns: minmax(0, 2.4fr) 1.1fr 0.7fr 0.9fr 0.9fr 1fr auto;
+    gap: 12px;
+    align-items: center;
+    padding: 10px 14px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    font-size: 0.85rem;
+    transition: background 0.12s;
+  }
+  .inv-row:last-child { border-bottom: none; }
+  .inv-row:hover { background: rgba(255,205,0,0.04); }
+  .inv-row.out  { border-left: 3px solid var(--cap-red); }
+  .inv-row.low  { border-left: 3px solid var(--warn); }
+  .inv-row.ok   { border-left: 3px solid var(--ok); }
+  .inv-row .ir-name {
+    font-weight: 500;
+    color: var(--white);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .inv-row .ir-cat {
+    color: var(--gray-light);
+    font-size: 0.78rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .inv-row .ir-qty {
+    font-family: 'Oswald', sans-serif;
+    font-size: 1rem;
+    text-align: right;
+    color: var(--cap-gold);
+    font-weight: 600;
+  }
+  .inv-row .ir-cost {
+    text-align: right;
+    color: var(--gray-light);
+    font-size: 0.8rem;
+  }
+  .inv-row .ir-loc {
+    color: var(--gray-light);
+    font-size: 0.78rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .inv-row .ir-status { text-align: center; }
+  .inv-row .ir-actions {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+  }
+  .inv-row .ir-mini {
+    width: 26px;
+    height: 26px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--surface2);
+    border: 1px solid rgba(255,255,255,0.12);
+    color: var(--white);
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    padding: 0;
+  }
+  .inv-row .ir-mini:hover { background: rgba(255,205,0,0.15); border-color: var(--cap-gold); }
+
+  /* Mobile collapse */
+  @media (max-width: 720px) {
+    .inv-row {
+      grid-template-columns: 1fr auto;
+      gap: 6px 10px;
+    }
+    .inv-row .ir-name { grid-column: 1 / 2; font-weight: 600; }
+    .inv-row .ir-status { grid-column: 2 / 3; grid-row: 1; }
+    .inv-row .ir-cat { grid-column: 1 / 3; font-size: 0.72rem; }
+    .inv-row .ir-qty { grid-column: 1 / 2; text-align: left; font-size: 0.95rem; }
+    .inv-row .ir-cost { grid-column: 2 / 3; }
+    .inv-row .ir-loc { grid-column: 1 / 3; }
+    .inv-row .ir-actions { grid-column: 1 / 3; justify-content: flex-end; }
+  }
+
+  /* ─── SUGGESTIONS FOOTER ─── */
+  .suggestions-card {
+    margin-top: 28px;
+    padding: 18px 22px;
+    background: linear-gradient(135deg, rgba(0,20,137,0.35) 0%, rgba(255,205,0,0.06) 100%);
+    border: 1px solid rgba(255,205,0,0.2);
+    border-left: 4px solid var(--cap-gold);
+    border-radius: 10px;
+    color: var(--gray-light);
+    font-size: 0.88rem;
+    line-height: 1.55;
+  }
+  .suggestions-card strong {
+    color: var(--cap-gold);
+    font-family: 'Oswald', sans-serif;
+    letter-spacing: 0.05em;
+    display: block;
+    margin-bottom: 4px;
+    font-size: 0.95rem;
+  }
+  .suggestions-card a {
+    color: var(--gold-light);
+    text-decoration: none;
+    border-bottom: 1px dashed var(--gold-light);
+  }
+  .suggestions-card a:hover { color: var(--cap-gold); border-bottom-style: solid; }
+
 </style>
 </head>
 <body>
+
+<!-- ═══════════════════════ LOGIN SCREEN ═══════════════════════ -->
+<div class="login-overlay" id="login-overlay">
+  <div class="login-box">
+    <svg class="login-emblem" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="50" cy="50" r="48" fill="#001489" stroke="#FFCD00" stroke-width="2"/>
+      <polygon points="50,12 59,40 88,40 65,57 74,85 50,68 26,85 35,57 12,40 41,40" fill="#ffffff"/>
+      <circle cx="50" cy="50" r="10" fill="#BA0C2F"/>
+    </svg>
+    <h2>SPRINGFIELD CAP</h2>
+    <p class="login-sub">Inventory Management System</p>
+    <p class="login-hint">
+      Enter the access password to manage inventory, or continue in read-only mode to view only.
+    </p>
+    <input type="password" id="login-pw" placeholder="Access password" autocomplete="off"
+           onkeydown="if(event.key==='Enter') tryUnlock()">
+    <div class="login-error" id="login-error"></div>
+    <div class="login-buttons">
+      <button class="btn btn-gold" onclick="tryUnlock()">🔓 Unlock Edit Access</button>
+      <div class="login-divider">or</div>
+      <button class="btn btn-ghost" onclick="enterReadOnly()">👁 Continue Read-Only</button>
+    </div>
+  </div>
+</div>
 
 <!-- ═══════════════════════ HEADER ═══════════════════════ -->
 <header>
@@ -716,7 +1005,7 @@
       <circle cx="50" cy="50" r="10" fill="#BA0C2F"/>
     </svg>
     <div class="header-title">
-      <h1>SPRINGFIELD CAP</h1>
+      <h1>SPRINGFIELD CAP <span id="readonly-badge-slot"></span></h1>
       <p>Civil Air Patrol · Inventory</p>
     </div>
     <div id="sync-indicator"></div>
@@ -740,21 +1029,37 @@
     <div class="stats" id="stats"></div>
 
     <div style="margin-top: 20px;">
-      <h3 style="font-family:'Oswald',sans-serif;font-size:1.1rem;letter-spacing:0.06em;text-transform:uppercase;color:var(--cap-gold);margin-bottom:12px;">
-        Quick Overview
+      <h3 style="font-family:'Oswald',sans-serif;font-size:1.1rem;letter-spacing:0.06em;text-transform:uppercase;color:var(--cap-gold);margin-bottom:6px;">
+        ⚠ Attention Needed
       </h3>
+      <p style="font-size:0.8rem;color:var(--gray);margin-bottom:12px;">
+        Items that are out of stock or below their reorder threshold.
+      </p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+        <button class="btn btn-gold btn-sm ro-hide" onclick="sendLowStockAlertNow()">📧 Send Low-Stock Alert Now</button>
+      </div>
       <div class="report-wrap">
         <table class="report">
           <thead>
             <tr>
               <th>Item</th>
+              <th>Category</th>
               <th style="text-align:right;">On Hand</th>
+              <th style="text-align:right;">Reorder At</th>
               <th style="text-align:center;">Status</th>
             </tr>
           </thead>
           <tbody id="dash-body"></tbody>
         </table>
       </div>
+    </div>
+
+    <!-- ─── Dashboard Suggestions Footer ─── -->
+    <div class="suggestions-card">
+      <strong>💡 Have a Suggestion?</strong>
+      This system was built to serve our squadron. If you spot a problem, want a new feature, or have an idea to make this tool better,
+      please email <strong style="display:inline;font-family:inherit;letter-spacing:normal;">2nd Lt Shawn Miller</strong>
+      at <a href="mailto:smiller@ilwg.cap.gov">smiller@ilwg.cap.gov</a>. Your feedback keeps this tool sharp.
     </div>
   </section>
 
@@ -763,7 +1068,7 @@
     <div class="page-head">
       <h2><span class="accent">▸</span> Inventory</h2>
       <div class="page-actions">
-        <button class="btn btn-gold desktop-only" onclick="openAddModal()">+ Add Item</button>
+        <button class="btn btn-gold desktop-only ro-hide" onclick="openAddModal()">+ Add Item</button>
       </div>
     </div>
     <div class="filters">
@@ -780,6 +1085,15 @@
         <option value="out">Out</option>
       </select>
     </div>
+    <div class="inv-toolbar-extra">
+      <span>View:</span>
+      <select id="inv-view-mode" onchange="setInvViewMode(this.value)">
+        <option value="line">Single Line (compact)</option>
+        <option value="card">Card View (boxes)</option>
+      </select>
+      <span id="inv-count" style="margin-left:auto;color:var(--gray);"></span>
+    </div>
+    <div class="inv-rows" id="inv-rows" style="display:none;"></div>
     <div class="items-grid" id="items-grid"></div>
   </section>
 
@@ -834,7 +1148,7 @@
       <div class="settings-card">
         <h3>Cloud Storage</h3>
         <p class="hint">
-          This app uses <strong style="color:var(--cap-gold)">Vercel KV</strong> for
+          This app uses <strong style="color:var(--cap-gold)">Upstash Redis</strong> for
           shared persistent storage. All squadron members see the same inventory, live.
           Data is isolated to the Springfield squadron and is not shared with any other unit.
         </p>
@@ -852,7 +1166,7 @@
         <div style="display:flex;gap:8px;">
           <input type="email" id="new-email" placeholder="email@example.com"
                  style="flex:1;padding:9px 12px;background:var(--navy);border:1px solid rgba(255,255,255,0.12);border-radius:6px;color:var(--white);">
-          <button class="btn btn-gold btn-sm" onclick="addEmail()">Add</button>
+          <button class="btn btn-gold btn-sm ro-hide" onclick="addEmail()">Add</button>
         </div>
         <div style="margin-top:16px;padding-top:14px;border-top:1px dashed rgba(255,255,255,0.1);">
           <div class="field">
@@ -869,7 +1183,7 @@
               <input type="text" id="ejs-tmpl" placeholder="template_xxxxx">
             </div>
           </div>
-          <button class="btn btn-gold btn-sm" onclick="saveEmailJsConfig()">Save Config</button>
+          <button class="btn btn-gold btn-sm ro-hide" onclick="saveEmailJsConfig()">Save Config</button>
           <button class="btn btn-ghost btn-sm" onclick="sendTestAlert()" style="margin-left:6px;">Send Test</button>
         </div>
       </div>
@@ -881,7 +1195,7 @@
         <div style="display:flex;gap:8px;">
           <input type="text" id="new-cat" placeholder="New category"
                  style="flex:1;padding:9px 12px;background:var(--navy);border:1px solid rgba(255,255,255,0.12);border-radius:6px;color:var(--white);">
-          <button class="btn btn-gold btn-sm" onclick="addCategory()">Add</button>
+          <button class="btn btn-gold btn-sm ro-hide" onclick="addCategory()">Add</button>
         </div>
       </div>
 
@@ -890,11 +1204,11 @@
         <p class="hint">Export a local backup, or reset all inventory to defaults.</p>
         <div style="display:flex;gap:8px;flex-wrap:wrap;">
           <button class="btn btn-ghost btn-sm" onclick="exportJSON()">⬇ Export JSON</button>
-          <label class="btn btn-ghost btn-sm" style="cursor:pointer;">
+          <label class="btn btn-ghost btn-sm ro-hide" style="cursor:pointer;">
             ⬆ Import JSON
             <input type="file" accept="application/json" onchange="importJSON(event)" style="display:none;">
           </label>
-          <button class="btn btn-danger btn-sm" onclick="confirmReset()">Reset Inventory</button>
+          <button class="btn btn-danger btn-sm ro-hide" onclick="confirmReset()">Reset Inventory</button>
         </div>
       </div>
 
@@ -902,19 +1216,27 @@
         <h3>About</h3>
         <p class="hint" style="margin:0;">
           <strong style="color:var(--cap-gold)">Springfield Civil Air Patrol Squadron</strong><br>
-          Inventory Management System v1.0<br>
-          Deployed on Vercel · Data stored in Vercel KV<br>
+          Inventory Management System v1.1<br>
+          Deployed on Vercel · Data stored in Upstash Redis<br>
           <em style="color:var(--gray);">Semper Vigilans — Always Vigilant</em>
         </p>
       </div>
 
+    </div>
+
+    <!-- ─── Settings Suggestions Footer ─── -->
+    <div class="suggestions-card">
+      <strong>💡 Have a Suggestion?</strong>
+      This system was built to serve our squadron. If you spot a problem, want a new feature, or have an idea to make this tool better,
+      please email <strong style="display:inline;font-family:inherit;letter-spacing:normal;">2nd Lt Shawn Miller</strong>
+      at <a href="mailto:smiller@ilwg.cap.gov">smiller@ilwg.cap.gov</a>. Your feedback keeps this tool sharp.
     </div>
   </section>
 
 </main>
 
 <!-- ═══════════════════════ FAB ═══════════════════════ -->
-<button class="fab" onclick="openAddModal()" aria-label="Add item">+</button>
+<button class="fab ro-hide" onclick="openAddModal()" aria-label="Add item">+</button>
 
 <!-- ═══════════════════════ MODAL ═══════════════════════ -->
 <div class="modal-backdrop" id="modal">
@@ -973,8 +1295,8 @@
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
-      <button class="btn btn-danger" id="delete-btn" onclick="deleteItem()" style="display:none;">Delete</button>
-      <button class="btn btn-gold" onclick="saveItemForm()">Save</button>
+      <button class="btn btn-danger ro-hide" id="delete-btn" onclick="deleteItem()" style="display:none;">Delete</button>
+      <button class="btn btn-gold ro-hide" onclick="saveItemForm()">Save</button>
     </div>
   </div>
 </div>
@@ -988,13 +1310,21 @@
 <script>
 /* ══════════════════════════════════════════════════════════════
    SPRINGFIELD CAP — INVENTORY APP
-   Data layer: Vercel KV via /api/items (same-domain fetch)
+   Data layer: Upstash Redis via /api/items (same-domain fetch)
    Data isolated to Springfield squadron via server-side namespace
    ══════════════════════════════════════════════════════════════ */
 
 const SQUADRON_NAME = 'Springfield Civil Air Patrol';
 const SQUADRON_SHORT = 'Springfield CAP';
 const API_BASE = '/api/items';
+
+// ─── ACCESS CONTROL ─────────────────────────────────────────────
+// To change the password, edit the line below and redeploy.
+const ACCESS_PASSWORD = 'springfield2026';
+// ────────────────────────────────────────────────────────────────
+
+// Track whether the current user has edit access
+let isReadOnly = true;
 
 const DEFAULT_CATEGORIES = ['Ribbons','Ribbon Racks','Insignia','Uniforms','Supplies','Cadet Materials','Other'];
 
@@ -1176,14 +1506,23 @@ function renderStats() {
 function renderDashboard() {
   const body = document.getElementById('dash-body');
   if (!body) return;
+
+  // Only show items that are out or low (Quick Overview = attention needed)
+  const attentionItems = items.filter(i => statusOf(i) !== 'ok');
+
   if (items.length === 0) {
-    body.innerHTML = '<tr><td colspan="3" style="text-align:center;padding:30px;color:var(--gray);">No inventory yet. Add items from the Inventory tab.</td></tr>';
+    body.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:30px;color:var(--gray);">No inventory yet. Add items from the Inventory tab.</td></tr>';
     return;
   }
-  body.innerHTML = items
-    .slice()
+
+  if (attentionItems.length === 0) {
+    body.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:30px;color:var(--ok);">✓ All items adequately stocked. Nothing requires attention.</td></tr>';
+    return;
+  }
+
+  body.innerHTML = attentionItems
     .sort((a,b) => {
-      // Out/low first
+      // Out first, then low
       const sa = statusOf(a), sb = statusOf(b);
       const rank = { out: 0, low: 1, ok: 2 };
       if (rank[sa] !== rank[sb]) return rank[sa] - rank[sb];
@@ -1193,7 +1532,9 @@ function renderDashboard() {
       const st = statusOf(i);
       return `<tr>
         <td class="name-col">${escape(i.name)}</td>
+        <td>${escape(i.category||'—')}</td>
         <td style="text-align:right;font-family:'Oswald',sans-serif;font-size:1rem;">${i.qty}</td>
+        <td style="text-align:right;color:var(--gray-light);">${i.reorderAt||0}</td>
         <td style="text-align:center;"><span class="status-badge status-${st}">${statusLabel(st)}</span></td>
       </tr>`;
     }).join('');
@@ -1204,7 +1545,8 @@ function renderInventory() {
   const catF = document.getElementById('filter-cat')?.value || 'all';
   const stF = document.getElementById('filter-status')?.value || 'all';
   const grid = document.getElementById('items-grid');
-  if (!grid) return;
+  const rows = document.getElementById('inv-rows');
+  if (!grid && !rows) return;
 
   const filtered = items.filter(i => {
     if (catF !== 'all' && i.category !== catF) return false;
@@ -1213,43 +1555,76 @@ function renderInventory() {
     return true;
   });
 
-  if (filtered.length === 0) {
-    grid.innerHTML = '<div style="grid-column:1/-1;padding:40px;text-align:center;color:var(--gray);">No items match your filters.</div>';
-    return;
+  // Sort alphabetically for line view consistency
+  filtered.sort((a,b) => String(a.name).localeCompare(String(b.name)));
+
+  // Update item count display
+  const countEl = document.getElementById('inv-count');
+  if (countEl) countEl.textContent = `${filtered.length} item${filtered.length === 1 ? '' : 's'}`;
+
+  // ── LINE VIEW (single-line rows) ───────────────────────────────
+  if (rows) {
+    if (filtered.length === 0) {
+      rows.innerHTML = '<div style="padding:40px;text-align:center;color:var(--gray);">No items match your filters.</div>';
+    } else {
+      rows.innerHTML = filtered.map(i => {
+        const st = statusOf(i);
+        return `<div class="inv-row ${st}">
+          <div class="ir-name" title="${escape(i.name)}">${escape(i.name)}</div>
+          <div class="ir-cat" title="${escape(i.category||'')}">${escape(i.category||'—')}</div>
+          <div class="ir-qty">${i.qty}</div>
+          <div class="ir-cost">${i.cost ? money(i.cost) : '—'}</div>
+          <div class="ir-loc" title="${escape(i.location||'')}">${escape(i.location||'—')}</div>
+          <div class="ir-status"><span class="status-badge status-${st}">${statusLabel(st)}</span></div>
+          <div class="ir-actions">
+            <button class="ir-mini ro-hide" onclick="adjustQty('${i.id}', -1)" title="Decrease">−</button>
+            <button class="ir-mini ro-hide" onclick="adjustQty('${i.id}', 1)" title="Increase">+</button>
+            <button class="ir-mini" onclick="openEditModal('${i.id}')" title="${isReadOnly ? 'View details' : 'Edit'}">✎</button>
+          </div>
+        </div>`;
+      }).join('');
+    }
   }
 
-  grid.innerHTML = filtered.map(i => {
-    const st = statusOf(i);
-    return `<div class="item-card ${st}">
-      <div class="item-head">
-        <div>
-          <div class="item-name">${escape(i.name)}</div>
-          <div class="item-meta">${escape(i.category||'—')} · Reorder at ${i.reorderAt||0}</div>
-        </div>
-        <span class="status-badge status-${st}">${statusLabel(st)}</span>
-      </div>
-      <div class="item-body">
-        <div style="font-size:0.82rem;color:var(--gray-light);">
-          <strong style="color:var(--cap-gold);">${i.qty}</strong> ${escape(i.unit||'each')} on hand
-          ${i.cost ? `· ${money(i.cost)}/${escape(i.unit||'each')} · <strong style="color:var(--cap-gold);">${money(i.qty*i.cost)}</strong> value` : ''}
-        </div>
-        <div class="qty-block">
-          <button class="qty-btn" onclick="adjustQty('${i.id}', -1)">−</button>
-          <span class="qty-value">${i.qty}</span>
-          <button class="qty-btn" onclick="adjustQty('${i.id}', 1)">+</button>
-        </div>
-      </div>
-      ${(i.vendor || i.location || i.notes) ? `
-      <div class="item-detail">
-        ${i.vendor ? `<strong>Vendor:</strong> ${i.vendorUrl ? `<a href="${escape(i.vendorUrl)}" target="_blank" rel="noopener">${escape(i.vendor)}</a>` : escape(i.vendor)} · ` : ''}
-        ${i.location ? `<strong>Location:</strong> ${escape(i.location)}` : ''}
-        ${i.notes ? `<br><em style="color:var(--gray);">${escape(i.notes)}</em>` : ''}
-      </div>` : ''}
-      <div class="item-actions">
-        <button class="btn btn-ghost btn-sm" onclick="openEditModal('${i.id}')">✎ Edit</button>
-      </div>
-    </div>`;
-  }).join('');
+  // ── CARD VIEW (boxes) ──────────────────────────────────────────
+  if (grid) {
+    if (filtered.length === 0) {
+      grid.innerHTML = '<div style="grid-column:1/-1;padding:40px;text-align:center;color:var(--gray);">No items match your filters.</div>';
+    } else {
+      grid.innerHTML = filtered.map(i => {
+        const st = statusOf(i);
+        return `<div class="item-card ${st}">
+          <div class="item-head">
+            <div>
+              <div class="item-name">${escape(i.name)}</div>
+              <div class="item-meta">${escape(i.category||'—')} · Reorder at ${i.reorderAt||0}</div>
+            </div>
+            <span class="status-badge status-${st}">${statusLabel(st)}</span>
+          </div>
+          <div class="item-body">
+            <div style="font-size:0.82rem;color:var(--gray-light);">
+              <strong style="color:var(--cap-gold);">${i.qty}</strong> ${escape(i.unit||'each')} on hand
+              ${i.cost ? `· ${money(i.cost)}/${escape(i.unit||'each')} · <strong style="color:var(--cap-gold);">${money(i.qty*i.cost)}</strong> value` : ''}
+            </div>
+            <div class="qty-block">
+              <button class="qty-btn" onclick="adjustQty('${i.id}', -1)">−</button>
+              <span class="qty-value">${i.qty}</span>
+              <button class="qty-btn" onclick="adjustQty('${i.id}', 1)">+</button>
+            </div>
+          </div>
+          ${(i.vendor || i.location || i.notes) ? `
+          <div class="item-detail">
+            ${i.vendor ? `<strong>Vendor:</strong> ${i.vendorUrl ? `<a href="${escape(i.vendorUrl)}" target="_blank" rel="noopener">${escape(i.vendor)}</a>` : escape(i.vendor)} · ` : ''}
+            ${i.location ? `<strong>Location:</strong> ${escape(i.location)}` : ''}
+            ${i.notes ? `<br><em style="color:var(--gray);">${escape(i.notes)}</em>` : ''}
+          </div>` : ''}
+          <div class="item-actions">
+            <button class="btn btn-ghost btn-sm" onclick="openEditModal('${i.id}')">${isReadOnly ? '👁 View' : '✎ Edit'}</button>
+          </div>
+        </div>`;
+      }).join('');
+    }
+  }
 }
 
 function renderReport() {
@@ -1359,6 +1734,7 @@ function populateCategoryDropdowns() {
 
 // ─── CRUD ───────────────────────────────────────────────────────
 async function adjustQty(id, delta) {
+  if (!requireEdit()) return;
   const i = items.find(x => x.id === id);
   if (!i) return;
   i.qty = Math.max(0, (Number(i.qty)||0) + delta);
@@ -1370,6 +1746,7 @@ async function adjustQty(id, delta) {
 }
 
 function openAddModal() {
+  if (!requireEdit()) return;
   editingId = null;
   document.getElementById('modal-title').textContent = 'Add Item';
   document.getElementById('delete-btn').style.display = 'none';
@@ -1386,8 +1763,8 @@ function openEditModal(id) {
   const i = items.find(x => x.id === id);
   if (!i) return;
   editingId = id;
-  document.getElementById('modal-title').textContent = 'Edit Item';
-  document.getElementById('delete-btn').style.display = 'inline-flex';
+  document.getElementById('modal-title').textContent = isReadOnly ? 'View Item' : 'Edit Item';
+  document.getElementById('delete-btn').style.display = isReadOnly ? 'none' : 'inline-flex';
   document.getElementById('f-name').value       = i.name || '';
   document.getElementById('f-category').value   = i.category || settings.categories[0];
   document.getElementById('f-unit').value       = i.unit || 'each';
@@ -1407,6 +1784,7 @@ function closeModal() {
 }
 
 async function saveItemForm() {
+  if (!requireEdit()) return;
   const name = document.getElementById('f-name').value.trim();
   if (!name) { toast('Item name is required', 'error'); return; }
   const data = {
@@ -1441,6 +1819,7 @@ async function saveItemForm() {
 }
 
 async function deleteItem() {
+  if (!requireEdit()) return;
   if (!editingId) return;
   if (!confirm('Delete this item permanently?')) return;
   items = items.filter(x => x.id !== editingId);
@@ -1454,6 +1833,7 @@ async function deleteItem() {
 
 // ─── EMAIL / SETTINGS ───────────────────────────────────────────
 function addEmail() {
+  if (!requireEdit()) return;
   const val = document.getElementById('new-email').value.trim();
   if (!val || !val.includes('@')) { toast('Enter a valid email', 'error'); return; }
   if (settings.emails.includes(val)) { toast('Already added', 'warn'); return; }
@@ -1464,18 +1844,25 @@ function addEmail() {
   toast('Email added', 'ok');
 }
 function removeEmail(idx) {
+  if (!requireEdit()) return;
   settings.emails.splice(idx, 1);
   saveSettingsLocal(settings);
   renderSettings();
 }
 function saveEmailJsConfig() {
+  if (!requireEdit()) return;
   settings.ejsPubKey   = document.getElementById('ejs-pub').value.trim();
   settings.ejsService  = document.getElementById('ejs-svc').value.trim();
   settings.ejsTemplate = document.getElementById('ejs-tmpl').value.trim();
   saveSettingsLocal(settings);
+  // Re-init EmailJS with the new key so it's ready for the next send
+  if (settings.ejsPubKey) {
+    try { emailjs.init({ publicKey: settings.ejsPubKey }); window._ejsInit = true; } catch {}
+  }
   toast('EmailJS config saved', 'ok');
 }
 function addCategory() {
+  if (!requireEdit()) return;
   const val = document.getElementById('new-cat').value.trim();
   if (!val) return;
   if (settings.categories.includes(val)) { toast('Already exists', 'warn'); return; }
@@ -1486,6 +1873,7 @@ function addCategory() {
   renderSettings();
 }
 function removeCategory(idx) {
+  if (!requireEdit()) return;
   if (items.some(i => i.category === settings.categories[idx])) {
     if (!confirm('Some items use this category. Remove anyway?')) return;
   }
@@ -1716,6 +2104,7 @@ function exportJSON() {
   toast('Backup exported', 'ok');
 }
 function importJSON(ev) {
+  if (!requireEdit()) { ev.target.value = ''; return; }
   const file = ev.target.files[0];
   if (!file) return;
   const reader = new FileReader();
@@ -1736,6 +2125,7 @@ function importJSON(ev) {
   ev.target.value = '';
 }
 function confirmReset() {
+  if (!requireEdit()) return;
   if (!confirm('Reset ALL inventory? This cannot be undone.')) return;
   if (!confirm('Are you absolutely sure? All items will be removed from the cloud.')) return;
   items = [];
@@ -1801,14 +2191,142 @@ document.getElementById('modal').addEventListener('click', (e) => {
   if (e.target.id === 'modal') closeModal();
 });
 
+// ─── ACCESS / LOGIN ─────────────────────────────────────────────
+function tryUnlock() {
+  const pw = document.getElementById('login-pw').value;
+  const errEl = document.getElementById('login-error');
+  if (pw === ACCESS_PASSWORD) {
+    isReadOnly = false;
+    applyAccessMode();
+    closeLogin();
+    toast('Edit access granted', 'ok');
+  } else {
+    errEl.textContent = 'Incorrect password. Try again or continue read-only.';
+    document.getElementById('login-pw').value = '';
+    document.getElementById('login-pw').focus();
+  }
+}
+
+function enterReadOnly() {
+  isReadOnly = true;
+  applyAccessMode();
+  closeLogin();
+}
+
+function closeLogin() {
+  document.getElementById('login-overlay').classList.add('hidden');
+  // Only initialize the app once the user has chosen
+  initApp();
+}
+
+function applyAccessMode() {
+  const slot = document.getElementById('readonly-badge-slot');
+  if (isReadOnly) {
+    document.body.classList.add('readonly');
+    if (slot) slot.innerHTML = '<span class="readonly-badge">Read Only</span>';
+  } else {
+    document.body.classList.remove('readonly');
+    if (slot) slot.innerHTML = '';
+  }
+}
+
+// Block edit-only actions in read-only mode (defense in depth)
+function requireEdit() {
+  if (isReadOnly) {
+    toast('Read-only mode. Refresh and enter password to edit.', 'warn');
+    return false;
+  }
+  return true;
+}
+
+// ─── INVENTORY VIEW MODE ────────────────────────────────────────
+function setInvViewMode(mode) {
+  try { localStorage.setItem('cap_springfield_view_mode', mode); } catch {}
+  applyInvViewMode();
+  renderInventory();
+}
+
+function applyInvViewMode() {
+  const mode = (localStorage.getItem('cap_springfield_view_mode') || 'line');
+  const sel = document.getElementById('inv-view-mode');
+  if (sel) sel.value = mode;
+  const rows = document.getElementById('inv-rows');
+  const grid = document.getElementById('items-grid');
+  if (mode === 'line') {
+    if (rows) rows.style.display = '';
+    if (grid) grid.style.display = 'none';
+  } else {
+    if (rows) rows.style.display = 'none';
+    if (grid) grid.style.display = '';
+  }
+}
+
+// ─── MANUAL LOW-STOCK ALERT BUTTON ──────────────────────────────
+async function sendLowStockAlertNow() {
+  if (!requireEdit()) return;
+  if (!settings.ejsPubKey || !settings.ejsService || !settings.ejsTemplate) {
+    toast('Configure EmailJS in Settings first', 'error'); return;
+  }
+  if (!settings.emails.length) {
+    toast('Add at least one recipient in Settings first', 'error'); return;
+  }
+  const needs = items.filter(i => statusOf(i) !== 'ok');
+  if (!needs.length) {
+    toast('Nothing low or out of stock — no alert needed', 'ok'); return;
+  }
+  if (!confirm(`Send a low-stock alert for ${needs.length} item${needs.length===1?'':'s'} to ${settings.emails.length} recipient${settings.emails.length===1?'':'s'}?`)) return;
+  try {
+    if (!window._ejsInit) {
+      emailjs.init({ publicKey: settings.ejsPubKey });
+      window._ejsInit = true;
+    }
+    // Build a summary list usable in the EmailJS template variable {{items_list}}
+    const itemsList = needs
+      .sort((a,b) => (statusOf(a) === 'out' ? -1 : 1))
+      .map(i => `• ${i.name} (${i.category||'—'}) — ${i.qty} on hand, reorder at ${i.reorderAt||0} [${statusLabel(statusOf(i))}]`)
+      .join('\n');
+    let sentCount = 0;
+    for (const to of settings.emails) {
+      await emailjs.send(settings.ejsService, settings.ejsTemplate, {
+        to_email: to,
+        squadron: SQUADRON_NAME,
+        item_name: needs.length === 1 ? needs[0].name : `${needs.length} items need attention`,
+        item_qty: needs.length === 1 ? needs[0].qty : needs.length,
+        reorder_at: needs.length === 1 ? (needs[0].reorderAt||0) : '',
+        status: needs.length === 1 ? statusLabel(statusOf(needs[0])) : 'Low Stock Summary',
+        vendor: needs.length === 1 ? (needs[0].vendor || 'Not specified') : '',
+        vendor_url: needs.length === 1 ? (needs[0].vendorUrl || '') : '',
+        items_list: itemsList,
+        item_count: needs.length
+      });
+      sentCount++;
+    }
+    toast(`Alert sent to ${sentCount} recipient${sentCount===1?'':'s'}`, 'ok');
+  } catch (e) {
+    toast('Email failed: ' + (e.text || e.message || 'unknown'), 'error');
+  }
+}
+
 // ─── INIT ───────────────────────────────────────────────────────
-(async function init() {
+async function initApp() {
+  applyInvViewMode();
   populateCategoryDropdowns();
   renderAll();
   await syncFromServer(true);
+  // Auto-init EmailJS if credentials are saved
+  if (settings.ejsPubKey && !window._ejsInit) {
+    try { emailjs.init({ publicKey: settings.ejsPubKey }); window._ejsInit = true; } catch {}
+  }
   // Periodic refresh (every 60s) to pick up changes from other users
   setInterval(() => syncFromServer(true), 60000);
-})();
+}
+
+// On page load: focus the password field. The app does not start until the user
+// clicks Unlock or Continue Read-Only.
+document.addEventListener('DOMContentLoaded', () => {
+  const pwInput = document.getElementById('login-pw');
+  if (pwInput) setTimeout(() => pwInput.focus(), 100);
+});
 </script>
 
 </body>
