@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -1326,7 +1326,7 @@ const ACCESS_PASSWORD = 'springfield2026';
 // Track whether the current user has edit access
 let isReadOnly = true;
 
-const DEFAULT_CATEGORIES = ['Ribbons','Ribbon Racks','Insignia','Uniforms','Supplies','Cadet Materials','Other'];
+const DEFAULT_CATEGORIES = ['Ribbons','Ribbon Racks','Insignia','OCP Uniform','OCP/ABU Uniform','Patches','Coins','Uniforms','Supplies','Cadet Materials','Other'];
 
 const DEFAULT_ITEMS = [
   { id: uid(), name: 'Achievement Ribbon',            category: 'Ribbons',         qty: 12, reorderAt: 5, unit: 'each', cost: 1.50, vendor: 'Vanguard Industries', vendorUrl: 'https://www.vanguardmil.com', location: 'Supply Cabinet A', notes: '', updated: today() },
@@ -1416,6 +1416,13 @@ async function syncFromServer(silent) {
         items = data.items;
       }
       saveCached(items);
+      // Auto-add any categories found in items but missing from local settings
+      const itemCats = [...new Set(items.map(i => i.category).filter(Boolean))];
+      const merged = [...new Set([...settings.categories, ...itemCats])].sort();
+      if (JSON.stringify(merged) !== JSON.stringify(settings.categories.slice().sort())) {
+        settings.categories = merged;
+        saveSettingsLocal(settings);
+      }
       renderAll();
       setSyncStatus('ok');
       if (!silent) toast('Inventory loaded from cloud', 'ok');
@@ -1766,6 +1773,13 @@ function openEditModal(id) {
   document.getElementById('modal-title').textContent = isReadOnly ? 'View Item' : 'Edit Item';
   document.getElementById('delete-btn').style.display = isReadOnly ? 'none' : 'inline-flex';
   document.getElementById('f-name').value       = i.name || '';
+  // Ensure this item's category is in the dropdown (handles categories from other computers)
+  const fcEdit = document.getElementById('f-category');
+  if (fcEdit && i.category && ![...fcEdit.options].some(o => o.value === i.category)) {
+    const opt = document.createElement('option');
+    opt.value = i.category; opt.textContent = i.category;
+    fcEdit.insertBefore(opt, fcEdit.firstChild);
+  }
   document.getElementById('f-category').value   = i.category || settings.categories[0];
   document.getElementById('f-unit').value       = i.unit || 'each';
   document.getElementById('f-qty').value        = i.qty || 0;
