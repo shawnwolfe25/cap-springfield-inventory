@@ -1836,12 +1836,13 @@ async function saveItemForm() {
   }
   saveCached(items);
   renderAll();
+  const savedId = editingId; // capture before closeModal() nulls it
   closeModal();
-  const target = items.find(x => x.id === (editingId || data.id));
+  const target = items.find(x => x.id === (savedId || data.id));
   if (target) {
     await pushItem(target);
-    toast(editingId ? 'Item updated' : 'Item added', 'ok');
-    if (!editingId) checkLowStockAlert(target);
+    toast(savedId ? 'Item updated' : 'Item added', 'ok');
+    if (!savedId) checkLowStockAlert(target);
   }
 }
 
