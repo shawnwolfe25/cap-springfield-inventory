@@ -1736,7 +1736,20 @@ function populateCategoryDropdowns() {
     }
   });
   const fc = document.getElementById('f-category');
-  if (fc) fc.innerHTML = opts;
+  if (fc) {
+    const cur = fc.value; // preserve current selection (modal may be open)
+    fc.innerHTML = opts;
+    // Restore the previously-selected value; inject it as an option if it
+    // was only added dynamically (e.g. by openEditModal) and isn't in settings.
+    if (cur) {
+      if (![...fc.options].some(o => o.value === cur)) {
+        const opt = document.createElement('option');
+        opt.value = cur; opt.textContent = cur;
+        fc.insertBefore(opt, fc.firstChild);
+      }
+      fc.value = cur;
+    }
+  }
 }
 
 // ─── CRUD ───────────────────────────────────────────────────────
